@@ -1,4 +1,4 @@
-﻿using PPDFramework;
+using PPDFramework;
 using PPDFramework.PPDStructure.EVDData;
 using PPDFramework.PPDStructure.PPDData;
 using SharpDX;
@@ -145,68 +145,27 @@ namespace PPDEditor
 
         protected Vector2 ChangeColorPositionStraight(float scale, float timediff)
         {
-            string MarkDistanceRatio_parm;
-            float MarkDistanceRatio;
+            string DecelerationRate_parm;
+            float DecelerationRate;
+            if (this.parameters.TryGetValue("DecelerationRate", out DecelerationRate_parm))
+            {
+                float.TryParse(DecelerationRate_parm, out DecelerationRate);
+            }
+            else
+            {
+                DecelerationRate = PPDStaticSetting.DecelerationRate;
+            }
+            string MarkDistance_parm;
             float MarkDistance;
-            if (this.parameters.TryGetValue("MarkDistanceRatio", out MarkDistanceRatio_parm))
+            if (this.parameters.TryGetValue("MarkDistance", out MarkDistance_parm))
             {
-                float.TryParse(MarkDistanceRatio_parm, out MarkDistanceRatio);
+                float.TryParse(MarkDistance_parm, out MarkDistance);
+                MarkDistance *= DecelerationRate;
             }
             else
             {
-                MarkDistanceRatio = PPDStaticSetting.MarkDistanceRatio;
+                MarkDistance = PPDStaticSetting.MarkDistance * DecelerationRate;
             }
-            MarkDistance = PPDStaticSetting.MarkDistance * PPDStaticSetting.DecelerationRate * MarkDistanceRatio;
-
-            string Curvature_parm;
-            float Curvature;
-            if (this.parameters.TryGetValue("Curvature", out Curvature_parm))
-            {
-                float.TryParse(Curvature_parm , out Curvature);
-                Curvature = (this.parameters.ContainsKey("#RightRotation")) ? Curvature : -Curvature;
-            }
-            else
-            {
-                Curvature = (this.parameters.ContainsKey("#RightRotation")) ? PPDStaticSetting.CurvatureMulti: -PPDStaticSetting.CurvatureMulti;
-            }
-            string MarkSpeed_parm;
-            float MarkSpeed;
-            if (this.parameters.TryGetValue("MarkSpeed", out MarkSpeed_parm))
-            {
-                float.TryParse(MarkSpeed_parm, out MarkSpeed);
-            }
-            else
-            {
-                MarkSpeed = PPDStaticSetting.MarkSpeed;
-            }
-            string Frequency_parm;
-            float Frequency;
-            if (this.parameters.TryGetValue("Frequency", out Frequency_parm))
-            {
-                float.TryParse(Frequency_parm, out Frequency);
-            }
-            else
-            {
-                Frequency = PPDStaticSetting.Frequency;
-            }
-            return new Vector2(MarkDistance * timediff * scale * MarkSpeed, Curvature * (float)Math.Sin(timediff * scale * MarkSpeed * Math.PI * Frequency * 0.5f));
-        }
-
-        protected Vector2 ChangeColorPosition(float scale, float timediff)
-        {
-            string MarkDistanceRatio_parm;
-            float MarkDistanceRatio;
-            float MarkDistance;
-            if (this.parameters.TryGetValue("MarkDistanceRatio", out MarkDistanceRatio_parm))
-            {
-                float.TryParse(MarkDistanceRatio_parm, out MarkDistanceRatio);
-            }
-            else
-            {
-                MarkDistanceRatio = PPDStaticSetting.MarkDistanceRatio;
-            }
-            MarkDistance = PPDStaticSetting.MarkDistance * MarkDistanceRatio;
-
             string Curvature_parm;
             float Curvature;
             if (this.parameters.TryGetValue("Curvature", out Curvature_parm))
@@ -216,7 +175,7 @@ namespace PPDEditor
             }
             else
             {
-                Curvature = (this.parameters.ContainsKey("#RightRotation")) ? PPDStaticSetting.Curvature : -PPDStaticSetting.Curvature;
+                Curvature = (this.parameters.ContainsKey("#RightRotation")) ? PPDStaticSetting.CurvatureMulti : -PPDStaticSetting.CurvatureMulti;
             }
             string MarkSpeed_parm;
             float MarkSpeed;
@@ -228,17 +187,43 @@ namespace PPDEditor
             {
                 MarkSpeed = PPDStaticSetting.MarkSpeed;
             }
-            string Frequency_parm;
-            float Frequency;
-            if (this.parameters.TryGetValue("Frequency", out Frequency_parm))
+            return new Vector2(MarkDistance * timediff * scale * MarkSpeed, Curvature * (float)Math.Sin(timediff * scale * Math.PI * MarkSpeed));
+        }
+
+        protected Vector2 ChangeColorPosition(float scale, float timediff)
+        {
+            string MarkDistance_parm;
+            float MarkDistance;
+            if (this.parameters.TryGetValue("MarkDistance", out MarkDistance_parm))
             {
-                float.TryParse(Frequency_parm, out Frequency);
+                float.TryParse(MarkDistance_parm, out MarkDistance);
             }
             else
             {
-                Frequency = PPDStaticSetting.Frequency;
+                MarkDistance = PPDStaticSetting.MarkDistance;
             }
-            return new Vector2(MarkDistance * timediff * scale * MarkSpeed, Curvature * (float)Math.Sin(timediff * scale * MarkSpeed * Math.PI * Frequency * 0.5f));
+            string Curvature_parm;
+            float Curvature;
+            if (this.parameters.TryGetValue("Curvature", out Curvature_parm))
+            {
+                float.TryParse(Curvature_parm, out Curvature);
+                Curvature = (this.parameters.ContainsKey("#RightRotation")) ? Curvature : -Curvature;
+            }
+            else
+            {
+                Curvature = (this.parameters.ContainsKey("#RightRotation")) ? PPDStaticSetting.Curvature: -PPDStaticSetting.Curvature;
+            }
+            string MarkSpeed_parm;
+            float MarkSpeed;
+            if (this.parameters.TryGetValue("MarkSpeed", out MarkSpeed_parm))
+            {
+                float.TryParse(MarkSpeed_parm, out MarkSpeed);
+            }
+            else
+            {
+                MarkSpeed = PPDStaticSetting.MarkSpeed;
+            }
+            return new Vector2(MarkDistance* timediff* scale * MarkSpeed, Curvature * (float)Math.Sin(timediff * scale * Math.PI * MarkSpeed));
         }
 
         public override void Draw()

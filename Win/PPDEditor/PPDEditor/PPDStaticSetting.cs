@@ -38,9 +38,6 @@ namespace PPDEditor
         public static float CurvatureMulti;
         public static float MarkSpeed;
         public static float DecelerationRate;
-        //08改2脚本用参数
-        public static float Frequency;
-        public static float MarkDistanceRatio;
         //设置参数默认值
 
         static PPDStaticSetting()
@@ -103,13 +100,11 @@ namespace PPDEditor
                 Angles[i] = ReadInt(setting, String.Format("Angle{0}", i), 10);
             }
             //读取新配置
-            MarkDistance = ReadFloat(setting, "MarkDistance", 250f);
-            Curvature = ReadFloat(setting, "Curvature", 17.36111111f);
+            MarkDistance = ReadFloat(setting, "MarkDistance", 300f);
+            Curvature = ReadFloat(setting, "Curvature", 20f);
             CurvatureMulti = ReadFloat(setting, "CurvatureMulti", 0f);
             MarkSpeed = ReadFloat(setting, "MarkSpeed", 1f);
-            DecelerationRate = ReadFloat(setting, "DecelerationRate", 0.733333333f);
-            Frequency = ReadFloat(setting, "Frequency", 2f);
-            MarkDistanceRatio = ReadFloat(setting, "MarkDistanceRatio", 1f);
+            DecelerationRate = ReadFloat(setting, "DecelerationRate", 0.72f);
         }
 
         private static int ReadInt(SettingReader setting, string key, int error)
