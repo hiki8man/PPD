@@ -10,7 +10,7 @@ namespace PPDEditor
 {
     public class Mark : GameComponent
     {
-        public const float defaultbpm = 120;
+        public const float defaultbpm = 130;
         protected const float autowidth = 1 / 120f;
         protected float x;
         protected float y;
@@ -145,81 +145,100 @@ namespace PPDEditor
 
         protected Vector2 ChangeColorPositionStraight(float scale, float timediff)
         {
+            string MarkDistanceRatio_parm;
+            float MarkDistanceRatio;
+            float MarkDistance;
+            if (this.parameters.TryGetValue("MarkDistanceRatio", out MarkDistanceRatio_parm))
+            {
+                float.TryParse(MarkDistanceRatio_parm, out MarkDistanceRatio);
+            }
+            else
+            {
+                MarkDistanceRatio = PPDStaticSetting.MarkDistanceRatio;
+            }
+            MarkDistance = PPDStaticSetting.MarkDistance * PPDStaticSetting.DecelerationRate * MarkDistanceRatio;
+
+            string Curvature_parm;
+            float Curvature;
+            if (this.parameters.TryGetValue("Curvature", out Curvature_parm))
+            {
+                float.TryParse(Curvature_parm , out Curvature);
+                Curvature = (this.parameters.ContainsKey("#RightRotation")) ? Curvature : -Curvature;
+            }
+            else
+            {
+                Curvature = (this.parameters.ContainsKey("#RightRotation")) ? PPDStaticSetting.CurvatureMulti: -PPDStaticSetting.CurvatureMulti;
+            }
+            string MarkSpeed_parm;
+            float MarkSpeed;
+            if (this.parameters.TryGetValue("MarkSpeed", out MarkSpeed_parm))
+            {
+                float.TryParse(MarkSpeed_parm, out MarkSpeed);
+            }
+            else
+            {
+                MarkSpeed = PPDStaticSetting.MarkSpeed;
+            }
             string Frequency_parm;
-            double Frequency;
+            float Frequency;
             if (this.parameters.TryGetValue("Frequency", out Frequency_parm))
             {
-                double.TryParse(Frequency_parm, out Frequency);
-                Frequency = this.parameters.ContainsKey("#RightRotation") ? Frequency : -Frequency;
+                float.TryParse(Frequency_parm, out Frequency);
             }
             else
             {
-                Frequency = 0;
+                Frequency = PPDStaticSetting.Frequency;
             }
-            string Amplitude_parm;
-            float Amplitude;
-            if (this.parameters.TryGetValue("Amplitude", out Amplitude_parm))
-            {
-                float.TryParse(Amplitude_parm, out Amplitude);
-            }
-            else
-            {
-                Amplitude = 500f;
-            }
-            string Distance_parm;
-            float Distance;
-            if (this.parameters.TryGetValue("Distance", out Distance_parm))
-            {
-                float.TryParse(Distance_parm, out Distance);
-            }
-            else
-            {
-                Distance = 220000f;
-            }
-            return new Vector2(Distance * 250f / 300000f * timediff * scale, (float)Math.Sin((double)(timediff * scale) * Math.PI * Frequency * 0.5) * Amplitude / 28.8f);
+            return new Vector2(MarkDistance * timediff * scale * MarkSpeed, Curvature * (float)Math.Sin(timediff * scale * MarkSpeed * Math.PI * Frequency * 0.5f));
         }
 
         protected Vector2 ChangeColorPosition(float scale, float timediff)
         {
+            string MarkDistanceRatio_parm;
+            float MarkDistanceRatio;
+            float MarkDistance;
+            if (this.parameters.TryGetValue("MarkDistanceRatio", out MarkDistanceRatio_parm))
+            {
+                float.TryParse(MarkDistanceRatio_parm, out MarkDistanceRatio);
+            }
+            else
+            {
+                MarkDistanceRatio = PPDStaticSetting.MarkDistanceRatio;
+            }
+            MarkDistance = PPDStaticSetting.MarkDistance * MarkDistanceRatio;
+
+            string Curvature_parm;
+            float Curvature;
+            if (this.parameters.TryGetValue("Curvature", out Curvature_parm))
+            {
+                float.TryParse(Curvature_parm, out Curvature);
+                Curvature = (this.parameters.ContainsKey("#RightRotation")) ? Curvature : -Curvature;
+            }
+            else
+            {
+                Curvature = (this.parameters.ContainsKey("#RightRotation")) ? PPDStaticSetting.Curvature : -PPDStaticSetting.Curvature;
+            }
+            string MarkSpeed_parm;
+            float MarkSpeed;
+            if (this.parameters.TryGetValue("MarkSpeed", out MarkSpeed_parm))
+            {
+                float.TryParse(MarkSpeed_parm, out MarkSpeed);
+            }
+            else
+            {
+                MarkSpeed = PPDStaticSetting.MarkSpeed;
+            }
             string Frequency_parm;
-            double Frequency;
+            float Frequency;
             if (this.parameters.TryGetValue("Frequency", out Frequency_parm))
             {
-                if (double.TryParse(Frequency_parm, out Frequency))
-                {
-                    double.TryParse(Frequency_parm, out Frequency);
-                    Frequency = this.parameters.ContainsKey("#RightRotation") ? Frequency : -Frequency;
-                }
-                else
-                {
-                    Frequency = 0;
-                }
+                float.TryParse(Frequency_parm, out Frequency);
             }
             else
             {
-                Frequency = this.parameters.ContainsKey("#RightRotation") ? 2 : -2;
+                Frequency = PPDStaticSetting.Frequency;
             }
-            string Amplitude_parm;
-            float Amplitude;
-            if (this.parameters.TryGetValue("Amplitude", out Amplitude_parm))
-            {
-                float.TryParse(Amplitude_parm, out Amplitude);
-            }
-            else
-            {
-                Amplitude = 500f;
-            }
-            string Distance_parm;
-            float Distance;
-            if (this.parameters.TryGetValue("Distance", out Distance_parm))
-            {
-                float.TryParse(Distance_parm, out Distance);
-            }
-            else
-            {
-                Distance = 300000f;
-            }
-            return new Vector2(Distance * 250f / 300000f * timediff * scale, (float)Math.Sin((double)(timediff * scale) * Math.PI * Frequency * 0.5) * Amplitude / 28.8f);
+            return new Vector2(MarkDistance * timediff * scale * MarkSpeed, Curvature * (float)Math.Sin(timediff * scale * MarkSpeed * Math.PI * Frequency * 0.5f));
         }
 
         public override void Draw()
@@ -273,7 +292,6 @@ namespace PPDEditor
         protected virtual void UpdateMarkImage()
         {
             int Note_Type = (int)GetButtonType();
-            //使用新的多押Note图
             if (sameTimingMarksCount > 1)
             {
                 Note_Type += 14;
