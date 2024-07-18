@@ -2,8 +2,11 @@
 using PPDEditorCommon;
 using PPDFramework.PPDStructure.EVDData;
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Windows.Documents;
 using System.Windows.Forms;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.TaskbarClock;
 
 namespace PPDEditor
 {
@@ -105,6 +108,26 @@ namespace PPDEditor
                 }
             }
             return ret.ToArray();
+        }
+        public SortedList<float, EventData> GetNoteEventBeforeTime(float time)
+        {
+            //添加新函数用于计算NoteBPM值
+            var EventList = new SortedList<float, EventData>();
+            foreach (KeyValuePair<float, EventData> pair in changeData)
+            {
+                if (pair.Key > time)
+                {
+                    break;
+                }
+                //读取到瞬时变速时清空列表
+                //该函数只用于计算Note的BPM值，而瞬时变速后Note的BPM初始值一定为事件设置的BPM值
+                if (pair.Value.BPMRapidChange)
+                {
+                    EventList.Clear();
+                }
+                EventList.Add(pair.Key, pair.Value);
+            }
+            return EventList;
         }
         public string GetFormattedContent(float time)
         {
