@@ -40,6 +40,7 @@ Ctrl+ドラッグ  移動
 Enter  変形終了";
 
         bool ignore;
+        bool add_offset_y;
         public GeometryCreator()
         {
             InitializeComponent();
@@ -64,11 +65,12 @@ Enter  変形終了";
             SquareGrid = new SquareGrid
             {
                 GridColor = System.Drawing.Color.Green,
-                Height = 25,
-                Width = 25,
+                Height = 20,
+                Width = 20,
                 OffsetX = 0,
                 OffsetY = 0
             };
+            add_offset_y = false;
         }
 
         void toolStripTextBox1_TextChanged(object sender, EventArgs e)
@@ -291,7 +293,7 @@ Enter  変形終了";
                         ratio = ratio <= 0 ? 0 : ratio;
                         ba.GetPoint(ratio >= BezierCaliculator.BezierAnalyzer.MaxRatio ? BezierCaliculator.BezierAnalyzer.MaxRatio : ratio, out pos, out dir);
                     }
-                    poses[i] = new Vector2(pos.X, pos.Y);
+                    poses[i] = new Vector2(pos.X, add_offset_y ? (pos.Y + 0.5f) : pos.Y);
                     dirs[i] = TransDirection(new Vector2(dir.X, dir.Y));
                 }
             }
@@ -671,10 +673,11 @@ Enter  変形終了";
                 Height = SquareGrid.Height * 2,
                 GridColor = SquareGrid.GridColor,
                 OffsetX = SquareGrid.OffsetX * 2,
-                OffsetY = SquareGrid.OffsetY * 2
+                OffsetY = add_offset_y ? (SquareGrid.OffsetY * 2 + 1): (SquareGrid.OffsetY * 2)
             };
             if (gsf.ShowDialog() == DialogResult.OK)
             {
+                add_offset_y = ((gsf.Grid.OffsetY % 2) == 1) ? true : false;
                 SquareGrid = new SquareGrid
                 {
                     Width = gsf.Grid.Width / 2,

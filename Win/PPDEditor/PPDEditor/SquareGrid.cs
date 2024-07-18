@@ -52,8 +52,8 @@ namespace PPDEditor
 
         public SquareGrid()
         {
-            Width = 5;
-            Height = 5;
+            Width = 20;
+            Height = 20;
             OffsetX = 0;
             OffsetY = 0;
             GridColor = ColorTranslator.FromHtml("#FFFFFF");

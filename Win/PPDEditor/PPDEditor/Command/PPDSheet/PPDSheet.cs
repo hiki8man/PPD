@@ -355,7 +355,7 @@ namespace PPDEditor.Command.PPDSheet
 
         public Mark AddMark(float time, int num, bool selectMark = true)
         {
-            return AddMark(time, 400, 225, 0, num, 0, selectMark);
+            return AddMark(time, 400, 220, 0, num, 0, selectMark);
         }
         public Mark AddMark(float time, float x, float y, float rotation, int num, uint id, bool selectMark = true)
         {
@@ -452,12 +452,12 @@ namespace PPDEditor.Command.PPDSheet
                     {
                         if (mk is ExMark exmk)
                         {
-                            ret[(int)mk.Type] |= (exmk.ExUpdate(em.GetCorrectTime(time, mk.Time), speedscale * bpm,
+                            ret[(int)mk.Type] |= (exmk.ExUpdate(em.GetCorrectTime(time, mk.Time), speedscale * ((last.BPM < 0) ? bpm : last.BPM),
                                 last.DisplayState, last.NoteType, last.SlideScale, em.ReleaseSound((int)mk.Type), pair.Value.SameTimings) == 1);
                         }
                         else
                         {
-                            ret[(int)mk.Type] |= (mk.Update(em.GetCorrectTime(time, mk.Time), speedscale * bpm,
+                            ret[(int)mk.Type] |= (mk.Update(em.GetCorrectTime(time, mk.Time), speedscale * ((last.BPM < 0) ? bpm : last.BPM),
                                 last.DisplayState, last.NoteType, pair.Value.SameTimings) == 1);
                         }
                         mk.GraphicUpdate();

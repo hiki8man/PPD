@@ -10,7 +10,7 @@ namespace PPDEditor
 {
     public class Mark : GameComponent
     {
-        public const float defaultbpm = 130;
+        public const float defaultbpm = 120;
         protected const float autowidth = 1 / 120f;
         protected float x;
         protected float y;
@@ -122,7 +122,13 @@ namespace PPDEditor
 
         protected Vector2 CalcurateMarkCPosition(Vector2 position, PictureObject colorMark, float markTime, float currentTime, float scale, Matrix m)
         {
+            /*PPD只有谱面存在AC/ACFT事件的时候多压才会变成直线飞入
             Vector2 vec = position + ((noteType == NoteType.AC || noteType == NoteType.ACFT) && sameTimingMarksCount > 1 ?
+                ChangeColorPositionStraight(scale, markTime - currentTime) :
+                ChangeColorPosition(scale, markTime - currentTime));
+            */
+            //08脚本不管是不是AC/ACFT事件都会让多压默认变成直线飞入
+            Vector2 vec = position + (sameTimingMarksCount > 1 ?
                 ChangeColorPositionStraight(scale, markTime - currentTime) :
                 ChangeColorPosition(scale, markTime - currentTime));
             vec = Vector2.TransformCoordinate(vec, m);
@@ -139,12 +145,81 @@ namespace PPDEditor
 
         protected Vector2 ChangeColorPositionStraight(float scale, float timediff)
         {
-            return new Vector2(300 * timediff * scale, 0);
+            string Frequency_parm;
+            double Frequency;
+            if (this.parameters.TryGetValue("Frequency", out Frequency_parm))
+            {
+                double.TryParse(Frequency_parm, out Frequency);
+                Frequency = this.parameters.ContainsKey("#RightRotation") ? Frequency : -Frequency;
+            }
+            else
+            {
+                Frequency = 0;
+            }
+            string Amplitude_parm;
+            float Amplitude;
+            if (this.parameters.TryGetValue("Amplitude", out Amplitude_parm))
+            {
+                float.TryParse(Amplitude_parm, out Amplitude);
+            }
+            else
+            {
+                Amplitude = 500f;
+            }
+            string Distance_parm;
+            float Distance;
+            if (this.parameters.TryGetValue("Distance", out Distance_parm))
+            {
+                float.TryParse(Distance_parm, out Distance);
+            }
+            else
+            {
+                Distance = 220000f;
+            }
+            return new Vector2(Distance * 250f / 300000f * timediff * scale, (float)Math.Sin((double)(timediff * scale) * Math.PI * Frequency * 0.5) * Amplitude / 28.8f);
         }
 
         protected Vector2 ChangeColorPosition(float scale, float timediff)
         {
-            return new Vector2(300 * timediff * scale, -30 * (float)Math.Sin(timediff * scale * Math.PI));
+            string Frequency_parm;
+            double Frequency;
+            if (this.parameters.TryGetValue("Frequency", out Frequency_parm))
+            {
+                if (double.TryParse(Frequency_parm, out Frequency))
+                {
+                    double.TryParse(Frequency_parm, out Frequency);
+                    Frequency = this.parameters.ContainsKey("#RightRotation") ? Frequency : -Frequency;
+                }
+                else
+                {
+                    Frequency = 0;
+                }
+            }
+            else
+            {
+                Frequency = this.parameters.ContainsKey("#RightRotation") ? 2 : -2;
+            }
+            string Amplitude_parm;
+            float Amplitude;
+            if (this.parameters.TryGetValue("Amplitude", out Amplitude_parm))
+            {
+                float.TryParse(Amplitude_parm, out Amplitude);
+            }
+            else
+            {
+                Amplitude = 500f;
+            }
+            string Distance_parm;
+            float Distance;
+            if (this.parameters.TryGetValue("Distance", out Distance_parm))
+            {
+                float.TryParse(Distance_parm, out Distance);
+            }
+            else
+            {
+                Distance = 300000f;
+            }
+            return new Vector2(Distance * 250f / 300000f * timediff * scale, (float)Math.Sin((double)(timediff * scale) * Math.PI * Frequency * 0.5) * Amplitude / 28.8f);
         }
 
         public override void Draw()
@@ -197,11 +272,17 @@ namespace PPDEditor
 
         protected virtual void UpdateMarkImage()
         {
-            mark = new PictureObject(device, resourceManager, skin.GetMarkImagePath(GetButtonType()), true)
+            int Note_Type = (int)GetButtonType();
+            //使用新的多押Note图
+            if (sameTimingMarksCount > 1)
+            {
+                Note_Type += 14;
+            }
+            mark = new PictureObject(device, resourceManager, skin.GetMarkImagePath(Note_Type), true)
             {
                 Position = new Vector2(x, y)
             };
-            markc = new PictureObject(device, resourceManager, skin.GetMarkColorImagePath(GetButtonType()))
+            markc = new PictureObject(device, resourceManager, skin.GetMarkColorImagePath(Note_Type))
             {
                 Position = new Vector2(x, y)
             };

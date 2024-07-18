@@ -1,4 +1,5 @@
 ﻿using PPDConfiguration;
+using PPDEditor.Properties;
 using PPDFramework;
 using System;
 using System.Collections.Generic;
@@ -7,6 +8,7 @@ using System.Drawing.Drawing2D;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
+using System.Windows.Media.Imaging;
 using WeifenLuo.WinFormsUI.Docking;
 
 namespace PPDEditor
@@ -23,8 +25,12 @@ namespace PPDEditor
 
         private static PPDEditorSkin skin = new PPDEditorSkin();
         string[] smallcolorimagepaths = new string[(int)ButtonType.Start];
-        PathObject[] colorimagepaths = new PathObject[(int)ButtonType.Start + 4];
-        PathObject[] imagepaths = new PathObject[(int)ButtonType.Start + 4];
+        //扩展为2倍长用于放置多压Note
+        //PathObject[] colorimagepaths = new PathObject[(int)ButtonType.Start + 4];
+        PathObject[] colorimagepaths = new PathObject[((int)ButtonType.Start + 4) * 2];
+        //PathObject[] imagepaths = new PathObject[(int)ButtonType.Start + 4];
+        PathObject[] imagepaths = new PathObject[((int)ButtonType.Start + 4) * 2];
+        //不知道为啥写在这的拖尾，没有看到相关的绘制函数
         PathObject[] traceimagepaths = new PathObject[(int)ButtonType.Start + 4];
         PathObject longnotecirclepath;
         float _innerradius;
@@ -34,8 +40,11 @@ namespace PPDEditor
         PathObject[] effectpaths = new PathObject[(int)MarkEvaluateType.Worst + 1];
         PathObject appeareffectpath;
         PathObject holdpath;
+        PathObject exholdpath;
         float holdx;
         float holdy;
+        float exholdx;
+        float exholdy;
 
         public static PPDEditorSkin Skin
         {
@@ -88,6 +97,20 @@ namespace PPDEditor
                 var sr = new StreamReader("defaultskin.ini");
                 var setting = new SettingReader(sr.ReadToEnd());
                 sr.Close();
+                //使用额外的配置文件管理新Note图
+                bool use_newnote = false;
+                if (File.Exists("PPDeditor_Note_Skin.ini"))
+                {
+                    sr = new StreamReader("PPDeditor_Note_Skin.ini");
+                    var ex_setting = new SettingReader(sr.ReadToEnd());
+                    sr.Close();
+                    //调用其自带的添加替换函数处理
+                    if (ex_setting.ReadBoolean("Enable"))
+                    {
+                        use_newnote = true;
+                        foreach(string key in ex_setting.Dictionary.Keys){setting.ReplaceOrAdd(key, ex_setting.Dictionary[key]);}
+                    }
+                }
                 for (ButtonType type = ButtonType.Square; type < ButtonType.Start; type++)
                 {
                     colorimagepaths[(int)type] = Utility.Path.Combine(setting.ReadString("Color" + type));
@@ -119,6 +142,49 @@ namespace PPDEditor
                 holdpath = Utility.Path.Combine(setting.ReadString("Hold"));
                 holdx = float.Parse(setting.ReadString("HoldX"));
                 holdy = float.Parse(setting.ReadString("HoldY"));
+                //是否使用新Note图
+                //尝试将代码修改为三元，看着依旧混乱，暂时先这样子
+                //多压图在原始配置长度后面，以14为开头
+                for (ButtonType type = ButtonType.Square; type < ButtonType.Start; type++)
+                {
+                    colorimagepaths[(int)type + 14] = (use_newnote && setting.ContainsKey("MultiColor" + type)) ? 
+                        Utility.Path.Combine(setting.ReadString("MultiColor" + type)):
+                        colorimagepaths[(int)type];
+                    imagepaths[(int)type + 14] = (use_newnote && setting.ContainsKey("Multi" + type.ToString())) ?
+                        Utility.Path.Combine(setting.ReadString("Multi" + type.ToString())):
+                        imagepaths[(int)type];
+                }
+                colorimagepaths[(int)ButtonType.Start + 14] = (use_newnote && setting.ContainsKey("MultiColorSliderRight")) ? 
+                    Utility.Path.Combine(setting["MultiColorSliderRight"]):
+                    colorimagepaths[(int)ButtonType.Start];
+                colorimagepaths[(int)ButtonType.Start + 1 + 14] = (use_newnote && setting.ContainsKey("MultiColorSliderLeft")) ? 
+                    Utility.Path.Combine(setting["MultiColorSliderLeft"]):
+                    colorimagepaths[(int)ButtonType.Start + 1];
+                colorimagepaths[(int)ButtonType.Start + 2 + 14] = (use_newnote && setting.ContainsKey("MultiColorSliderRightExtra")) ?
+                    Utility.Path.Combine(setting["MultiColorSliderRightExtra"]):
+                    colorimagepaths[(int)ButtonType.Start + 2];
+                colorimagepaths[(int)ButtonType.Start + 3 + 14] = (use_newnote && setting.ContainsKey("MultiColorSliderLeftExtra")) ? 
+                    Utility.Path.Combine(setting["MultiColorSliderLeftExtra"]):
+                    colorimagepaths[(int)ButtonType.Start + 3];
+                imagepaths[(int)ButtonType.Start + 14] = (use_newnote && setting.ContainsKey("MultiSliderRight")) ? 
+                    Utility.Path.Combine(setting["MultiSliderRight"]):
+                    imagepaths[(int)ButtonType.Start];
+                imagepaths[(int)ButtonType.Start + 1 + 14] = (use_newnote && setting.ContainsKey("MultiSliderLeft")) ?
+                    Utility.Path.Combine(setting["MultiSliderLeft"]):
+                    imagepaths[(int)ButtonType.Start + 1];
+                imagepaths[(int)ButtonType.Start + 2 + 14] = (use_newnote && setting.ContainsKey("MultiSliderRightExtra")) ?
+                    Utility.Path.Combine(setting["MultiSliderRightExtra"]):
+                    imagepaths[(int)ButtonType.Start + 2];
+                imagepaths[(int)ButtonType.Start + 3 + 14] = (use_newnote && setting.ContainsKey("MultiColorSliderLeftExtra")) ?
+                    Utility.Path.Combine(setting["MultiColorSliderLeftExtra"]):
+                    imagepaths[(int)ButtonType.Start + 3];
+                //添加Exhold用于多压
+                exholdpath = (use_newnote && setting.ContainsKey("MultiHold")) ?
+                    Utility.Path.Combine(setting.ReadString("MultiHold")) :holdpath;
+                exholdx = (use_newnote && setting.ContainsKey("MultiHoldX")) ? 
+                    float.Parse(setting.ReadString("MultiHoldX")):holdx;
+                exholdy = (use_newnote && setting.ContainsKey("MultiHoldY")) ?
+                    float.Parse(setting.ReadString("MultiHoldY")):holdy;
             }
         }
 
@@ -468,6 +534,16 @@ namespace PPDEditor
             return imagepaths[(int)buttontype];
         }
 
+        //添加整数型获取路径以支持新添加的 ex 配置文件
+        public PathObject GetMarkColorImagePath(int buttontype)
+        {
+            return colorimagepaths[buttontype];
+        }
+
+        public PathObject GetMarkImagePath(int buttontype)
+        {
+            return imagepaths[buttontype];
+        }
         public PathObject GetTraceImagePath(ButtonType buttontype)
         {
             return traceimagepaths[(int)buttontype];
@@ -510,6 +586,13 @@ namespace PPDEditor
             imagepath = holdpath;
             x = holdx;
             y = holdy;
+        }
+        
+        public void GetMultiHoldInfo(out PathObject imagepath, out float x, out float y)
+        {
+            imagepath = exholdpath;
+            x = exholdx;
+            y = exholdy;
         }
     }
 }

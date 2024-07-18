@@ -42,6 +42,18 @@ namespace PPDEditor
             {
                 Position = new Vector2(x, y)
             };
+            //多压使用ExHold
+            //但是多压判断放在这里无法正常使用，原因不明
+            /*
+            if (sameTimingMarksCount > 1)
+            {
+                skin.GetExHoldInfo(out filename, out a, out b);
+            }
+            else
+            {
+                skin.GetHoldInfo(out filename, out a, out b);
+            }
+            */
             skin.GetHoldInfo(out filename, out a, out b);
             hold = new PictureObject(device, resourceManager, filename, true)
             {
@@ -160,11 +172,16 @@ namespace PPDEditor
             exMarksc = new PictureObject[ExCount];
             for (int i = 0; i < exMarks.Length; i++)
             {
-                exMarks[i] = new PictureObject(device, resourceManager, skin.GetMarkImagePath(GetButtonType() + 2), true)
+                int Note_Type = (int)GetButtonType();
+                if (sameTimingMarksCount > 1)
+                {
+                    Note_Type += 14;
+                }
+                exMarks[i] = new PictureObject(device, resourceManager, skin.GetMarkImagePath(Note_Type + 2), true)
                 {
                     Position = new Vector2(x, y)
                 };
-                exMarksc[i] = new PictureObject(device, resourceManager, skin.GetMarkColorImagePath(GetButtonType() + 2))
+                exMarksc[i] = new PictureObject(device, resourceManager, skin.GetMarkColorImagePath(Note_Type + 2))
                 {
                     Position = new Vector2(x, y)
                 };
@@ -290,6 +307,22 @@ namespace PPDEditor
             trace = new PictureObject(device, resourceManager, skin.GetTraceImagePath(GetButtonType()), false)
             {
                 Position = new Vector2(x, y)
+            };
+            //理由不明但是放这里就能正常使用
+            PathObject filename;
+            float a;
+            float b;
+            if (sameTimingMarksCount > 1)
+            {
+                skin.GetMultiHoldInfo(out filename, out a, out b);
+            }
+            else
+            {
+                skin.GetHoldInfo(out filename, out a, out b);
+            }
+            hold = new PictureObject(device, resourceManager, filename, true)
+            {
+                Position = new Vector2(x + a, y + b)
             };
             CreateExMark();
             UpdateMarkPosition();
