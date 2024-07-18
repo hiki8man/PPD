@@ -6,6 +6,7 @@ using SharpDX;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.AccessControl;
 
 namespace PPDEditor.Command.PPDSheet
 {
@@ -355,7 +356,7 @@ namespace PPDEditor.Command.PPDSheet
 
         public Mark AddMark(float time, int num, bool selectMark = true)
         {
-            return AddMark(time, 400, 220, 0, num, 0, selectMark);
+            return AddMark(time, 400, 225, 0, num, 0, selectMark);
         }
         public Mark AddMark(float time, float x, float y, float rotation, int num, uint id, bool selectMark = true)
         {
@@ -443,6 +444,7 @@ namespace PPDEditor.Command.PPDSheet
                 }
                 foreach (KeyValuePair<float, SameTimingMarks> pair in data2)
                 {
+                    //PPD默认根据Note时间获取每个Note的事件参数
                     var current = WindowUtility.EventManager.GetEvent(pair.Key);
                     if (last != current && current != null)
                     {
@@ -452,12 +454,20 @@ namespace PPDEditor.Command.PPDSheet
                     {
                         if (mk is ExMark exmk)
                         {
+                            /*
                             ret[(int)mk.Type] |= (exmk.ExUpdate(em.GetCorrectTime(time, mk.Time), speedscale * ((last.BPM < 0) ? bpm : last.BPM),
+                                last.DisplayState, last.NoteType, last.SlideScale, em.ReleaseSound((int)mk.Type), pair.Value.SameTimings) == 1);
+                            */
+                            ret[(int)mk.Type] |= (exmk.ExUpdate(em.GetCorrectTime(time, mk.Time), speedscale * (Get60FpsBPM(time)),
                                 last.DisplayState, last.NoteType, last.SlideScale, em.ReleaseSound((int)mk.Type), pair.Value.SameTimings) == 1);
                         }
                         else
                         {
+                            /*
                             ret[(int)mk.Type] |= (mk.Update(em.GetCorrectTime(time, mk.Time), speedscale * ((last.BPM < 0) ? bpm : last.BPM),
+                                last.DisplayState, last.NoteType, pair.Value.SameTimings) == 1);
+                            */
+                            ret[(int)mk.Type] |= (mk.Update(em.GetCorrectTime(time, mk.Time), speedscale * (Get60FpsBPM(time)),
                                 last.DisplayState, last.NoteType, pair.Value.SameTimings) == 1);
                         }
                         mk.GraphicUpdate();
@@ -465,6 +475,68 @@ namespace PPDEditor.Command.PPDSheet
                 }
             }
             return ret;
+        }
+        private float Get60FpsBPM(float ctime)
+        {
+            //添加新函数用于模拟60帧下BPM变化
+            //无法完美还原 Note BPM 变化过多后在游戏中的实际表现
+            SortedList<float, EventData> EventList = WindowUtility.EventManager.GetNoteEventBeforeTime(ctime);
+            if (EventList == null)
+            {
+                return BPM;
+            }
+            if (EventList.Count == 1)
+            {
+                return (EventList.Values[0].BPM >= 0) ? EventList.Values[0].BPM:BPM;
+            }
+            float NoteBPM = 0;
+
+            bool FirstBPMChange = true;
+            bool SecondBPMChange = false;
+
+            float BPMChangeOffset = 0;
+
+            float LastEventBPM = BPM;
+            float LastBPMEventTime = 0;
+            foreach (KeyValuePair<float, EventData> ev in EventList)
+            {
+                
+                LastEventBPM = (ev.Value.BPM >= 0) ? ev.Value.BPM : LastEventBPM;
+                if (FirstBPMChange || ev.Value.BPMRapidChange)
+                {
+                    NoteBPM = LastEventBPM;
+                    FirstBPMChange = false;
+                    SecondBPMChange = true;
+                    BPMChangeOffset = 0;
+                    LastBPMEventTime = ev.Key;
+                    continue;
+                }
+                if (!SecondBPMChange)
+                {
+                    NoteBPM += Get60FpsBPMOffset(BPMChangeOffset, ev.Key - LastBPMEventTime);
+                }
+                else
+                {
+                    SecondBPMChange = false;
+                }
+                LastBPMEventTime = ev.Key;
+                BPMChangeOffset = LastEventBPM - NoteBPM;
+            }
+            NoteBPM += Get60FpsBPMOffset(BPMChangeOffset, ctime - LastBPMEventTime);
+            return NoteBPM;
+        }
+        private float Get60FpsBPMOffset(float BPMChangeOffset, float ChangeTime)
+        {
+            //添加新函数用于计算BPM变化值
+            float BPMChangeByTime = ChangeTime * 60;
+            if (Math.Abs(BPMChangeOffset) <= BPMChangeByTime)
+            {
+                return BPMChangeOffset;
+            }
+            else
+            {
+                return (BPMChangeOffset > 0) ? BPMChangeByTime : -BPMChangeByTime;
+            }
         }
         public void DrawMark()
         {
