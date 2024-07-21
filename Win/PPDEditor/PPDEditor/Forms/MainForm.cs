@@ -2692,6 +2692,14 @@ namespace PPDEditor.Forms
                 setting.ReplaceOrAdd(String.Format("Move{0}", i), PPDStaticSetting.Moves[i]);
                 setting.ReplaceOrAdd(String.Format("Angle{0}", i), PPDStaticSetting.Angles[i]);
             }
+            //保存08改2参数
+            setting.ReplaceOrAdd("MarkDistance", PPDStaticSetting.MarkDistance);
+            setting.ReplaceOrAdd("Curvature", PPDStaticSetting.Curvature);
+            setting.ReplaceOrAdd("CurvatureMulti", PPDStaticSetting.CurvatureMulti);
+            setting.ReplaceOrAdd("MarkSpeed", PPDStaticSetting.MarkSpeed);
+            setting.ReplaceOrAdd("DecelerationRate", PPDStaticSetting.DecelerationRate);
+            setting.ReplaceOrAdd("Frequency", PPDStaticSetting.Frequency);
+            setting.ReplaceOrAdd("MarkDistanceRatio", PPDStaticSetting.MarkDistanceRatio);
             using (SettingWriter sw = new SettingWriter(path, false))
             {
                 foreach (KeyValuePair<string, string> kvp in setting.Dictionary)
