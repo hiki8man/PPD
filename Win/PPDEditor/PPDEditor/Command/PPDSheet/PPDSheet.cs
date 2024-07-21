@@ -391,7 +391,7 @@ namespace PPDEditor.Command.PPDSheet
         }
         public Mark AddExMark(float time, float endtime, int num, bool selectMark = true)
         {
-            return AddExMark(time, endtime, 400, 225, 0, num, 0, selectMark);
+            return AddExMark(time, endtime, 400, 220, 0, num, 0, selectMark);
         }
         public Mark AddExMark(float time, float endtime, float x, float y, float rotation, int num, uint id, bool selectMark = true)
         {
