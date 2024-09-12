@@ -356,7 +356,7 @@ namespace PPDEditor.Command.PPDSheet
 
         public Mark AddMark(float time, int num, bool selectMark = true)
         {
-            return AddMark(time, 400, 225, 0, num, 0, selectMark);
+            return AddMark(time, 400, 220, 0, num, 0, selectMark);
         }
         public Mark AddMark(float time, float x, float y, float rotation, int num, uint id, bool selectMark = true)
         {
@@ -392,7 +392,7 @@ namespace PPDEditor.Command.PPDSheet
         }
         public Mark AddExMark(float time, float endtime, int num, bool selectMark = true)
         {
-            return AddExMark(time, endtime, 400, 225, 0, num, 0, selectMark);
+            return AddExMark(time, endtime, 400, 220, 0, num, 0, selectMark);
         }
         public Mark AddExMark(float time, float endtime, float x, float y, float rotation, int num, uint id, bool selectMark = true)
         {
@@ -492,7 +492,6 @@ namespace PPDEditor.Command.PPDSheet
             float NoteBPM = 0;
 
             bool FirstBPMChange = true;
-            bool SecondBPMChange = false;
 
             float BPMChangeOffset = 0;
 
@@ -506,23 +505,21 @@ namespace PPDEditor.Command.PPDSheet
                 {
                     NoteBPM = LastEventBPM;
                     FirstBPMChange = false;
-                    SecondBPMChange = true;
                     BPMChangeOffset = 0;
                     LastBPMEventTime = ev.Key;
                     continue;
                 }
-                if (!SecondBPMChange)
+                if (BPMChangeOffset != 0)
                 {
-                    NoteBPM += Get60FpsBPMOffset(BPMChangeOffset, ev.Key - LastBPMEventTime);
-                }
-                else
-                {
-                    SecondBPMChange = false;
+                    NoteBPM += Get60FpsBPMOffset(BPMChangeOffset, ctime - LastBPMEventTime);
                 }
                 LastBPMEventTime = ev.Key;
                 BPMChangeOffset = LastEventBPM - NoteBPM;
             }
-            NoteBPM += Get60FpsBPMOffset(BPMChangeOffset, ctime - LastBPMEventTime);
+            if (BPMChangeOffset != 0)
+            {
+                NoteBPM += Get60FpsBPMOffset(BPMChangeOffset, ctime - LastBPMEventTime);
+            }
             return NoteBPM;
         }
         private float Get60FpsBPMOffset(float BPMChangeOffset, float ChangeTime)
