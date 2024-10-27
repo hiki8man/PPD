@@ -1,3 +1,5 @@
+# 这是用于备份修改版PPDeditor代码的分支，没有编译好的版本
+
 # PPD
 
 [PPD](https://projectdxxx.me/) is a rhythm game inspired by [Project Diva](http://miku.sega.jp/) series.
