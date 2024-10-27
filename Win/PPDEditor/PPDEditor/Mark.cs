@@ -105,7 +105,14 @@ namespace PPDEditor
                     Hidden = true;
                 }
             }
+            /*原版代码
             markc.Position = CalcurateMarkCPosition(Position, markc, this.time, ctime, scale, m);
+            */
+            //真咲さん说需要原版08里面的飞入降速，大致读了下代码，似乎只是根据设定的BPM减少值重算飞入
+            //和MarkSpeed原理一致，不过既然确实有人用那还是留着吧
+            float scale_vet08h = ((float)bp - PPDStaticSetting.SubtractBPM) / defaultbpm;
+            markc.Position = CalcurateMarkCPosition(Position, markc, this.time, ctime, scale_vet08h, m);
+
             jiku.Rotation = -1 * (float)Math.PI * (this.time - ctime) * scale;
             if (jiku.Rotation >= 0)
             {
@@ -128,6 +135,7 @@ namespace PPDEditor
                 ChangeColorPosition(scale, markTime - currentTime));
             */
             //08脚本不管是不是AC/ACFT事件都会让多压默认变成直线飞入
+
             Vector2 vec = position + (sameTimingMarksCount > 1 ?
                 ChangeColorPositionStraight(scale, markTime - currentTime) :
                 ChangeColorPosition(scale, markTime - currentTime));

@@ -41,6 +41,7 @@ namespace PPDEditor
         //08改2脚本用参数
         public static float Frequency;
         public static float MarkDistanceRatio;
+        public static float SubtractBPM;
         //设置参数默认值
 
         static PPDStaticSetting()
@@ -110,6 +111,7 @@ namespace PPDEditor
             DecelerationRate = ReadFloat(setting, "DecelerationRate", 0.733333333f);
             Frequency = ReadFloat(setting, "Frequency", 2f);
             MarkDistanceRatio = ReadFloat(setting, "MarkDistanceRatio", 1f);
+            SubtractBPM = ReadFloat(setting, "SubtractBPM", 0f);
         }
 
         private static int ReadInt(SettingReader setting, string key, int error)
