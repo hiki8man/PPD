@@ -90,7 +90,7 @@ namespace PPDFramework.Resource
             {
                 return false;
             }
-            var imageResource = ImageResourceFactoryManager.Factory.Create(device, stream, true);
+            var imageResource = ImageResourceFactoryManager.Factory.Create(device, stream, false);
             if (imageScale.Ratio == 1f)
             {
                 Add(resourceName, imageResource);
