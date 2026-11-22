@@ -21,8 +21,8 @@ namespace PPDEditor
             fill = 3
         }
 
-        private static readonly PPDEditorSkin skin = new();
         internal static bool EnableEmbeddedSkin { get; set; } = true;
+        private static readonly PPDEditorSkin skin = new();
         readonly string[] smallcolorimagepaths = new string[(int)ButtonType.Start];
         readonly PathObject[] defaultColorImagePaths = new PathObject[((int)ButtonType.Start + 4) * 2];
         readonly PathObject[] defaultImagePaths = new PathObject[((int)ButtonType.Start + 4) * 2];
