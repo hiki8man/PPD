@@ -52,7 +52,9 @@ namespace PPDFramework
         {
             get
             {
-                return Path.Combine(Path.GetDirectoryName(Assembly.GetAssembly(this.GetType()).Location), DBName);
+                var location = Assembly.GetAssembly(this.GetType())?.Location;
+                var dir = string.IsNullOrEmpty(location) ? System.AppContext.BaseDirectory : Path.GetDirectoryName(location);
+                return Path.Combine(dir, DBName);
             }
         }
 

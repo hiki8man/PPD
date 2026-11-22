@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Reflection;
 
 namespace PPDMovie
@@ -9,7 +10,10 @@ namespace PPDMovie
         {
             get
             {
-                return Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                var location = Assembly.GetExecutingAssembly().Location;
+                return string.IsNullOrEmpty(location)
+                    ? AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                    : Path.GetDirectoryName(location);
             }
         }
     }
