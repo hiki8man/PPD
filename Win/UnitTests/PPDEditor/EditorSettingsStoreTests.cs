@@ -87,6 +87,9 @@ namespace UnitTests.PPDEditor
             Assert.Equal("1", setting.ReadString("Maximised"));
             Assert.Equal(PPDStaticSetting.Moves[3].ToString(), setting.ReadString("Move3"));
             Assert.All(Enumerable.Range(0, 8), i => Assert.Equal(PPDStaticSetting.Angles[i].ToString(), setting.ReadString("Angle" + i)));
+            Assert.Equal(PPDStaticSetting.ScriptMode.ToString(), setting.ReadString("ScriptMode"));
+            Assert.Equal(PPDStaticSetting.Vet08MarkDistance.ToString(), setting.ReadString("Vet08_MarkDistance"));
+            Assert.Equal(PPDStaticSetting.Vet08HMarkDistance.ToString(), setting.ReadString("Vet08H_MarkDistance"));
         }
     }
 }

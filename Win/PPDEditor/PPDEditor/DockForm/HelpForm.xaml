@@ -7,10 +7,10 @@
             <ToolBar>
                 <TextBox x:Name="toolStripTextBox1" Width="600" KeyDown="ToolStripTextBox1_KeyDown" />
                 <Button x:Name="toolStripButton1" IsEnabled="False" Click="ToolStripButton1_Click">
-                    <Image Source="/PPDEditor;component/img/back.png" Stretch="None" />
+                    <Image Source="/img/back.png" Stretch="None" />
                 </Button>
                 <Button x:Name="toolStripButton2" IsEnabled="False" Click="ToolStripButton2_Click">
-                    <Image Source="/PPDEditor;component/img/next.png" Stretch="None" />
+                    <Image Source="/img/next.png" Stretch="None" />
                 </Button>
                 <!-- 読み込み中に出す -->
                 <ProgressBar x:Name="toolStripButton3" Width="23" Height="12" IsIndeterminate="True" Visibility="Collapsed" />

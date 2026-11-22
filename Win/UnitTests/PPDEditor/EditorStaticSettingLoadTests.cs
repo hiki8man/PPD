@@ -1,4 +1,5 @@
 using PPDEditor;
+using PPDEditor.Models;
 using PPDEditor.ViewModels.Docks;
 using System;
 using System.Globalization;
@@ -45,7 +46,9 @@ namespace UnitTests.PPDEditor
                 "[Maximised]1", "[Size]1024,768", "[Location]10,20", "[AuthorName]作者", "[MovieLatency]0.25", "[Language]en",
                 "[HideToggleRectangle]1", "[HideToggleArrow]1", "[FixDockPanel]1", "[EnableToChangeMarkTypeAndTime]1", "[ApplyToIniMovieTrimming]1",
                 "[CustomCanvasBackColor]128, 64, 32, 16", "[CanvasSizeIndex]2", "[CanvasColorIndex]3", "[MemoFontSize]12.5",
-                "[Move0]2", "[Move5]7", "[Angle1]45", "[Angle7]90"));
+                "[Move0]2", "[Move5]7", "[Angle1]45", "[Angle7]90",
+                "[ScriptMode]Vet08", "[RememberScriptMode]1",
+                "[Vet08_MarkDistance]280", "[Vet08_Curvature]21", "[Vet08H_MarkDistance]260", "[Frequency]3", "[SubtractBPM]12"));
 
             Assert.Equal(WindowState.Maximized, PPDStaticSetting.LastWindowState);
             Assert.Equal((1024, 768), (PPDStaticSetting.LastWindowSize.Width, PPDStaticSetting.LastWindowSize.Height));
@@ -58,6 +61,10 @@ namespace UnitTests.PPDEditor
             Assert.Equal((2, 3, 12.5f), (PPDStaticSetting.CanvasSizeIndex, PPDStaticSetting.CanvasColorIndex, PPDStaticSetting.MemoFontSize));
             Assert.Equal([2, 10, 5, 1, 1, 7, 1, 1], PPDStaticSetting.Moves);
             Assert.Equal([0, 45, 15, 10, 10, 10, 10, 90], PPDStaticSetting.Angles);
+            Assert.Equal(EditorScriptMode.Vet08, PPDStaticSetting.ScriptMode);
+            Assert.True(PPDStaticSetting.RememberScriptMode);
+            Assert.Equal((280f, 21f), (PPDStaticSetting.MarkDistance, PPDStaticSetting.Curvature));
+            Assert.Equal((260f, 3f, 12f), (PPDStaticSetting.Vet08HMarkDistance, PPDStaticSetting.Frequency, PPDStaticSetting.SubtractBPM));
         }
 
         [Fact]

@@ -56,25 +56,25 @@
                                 <Image>
                                     <Image.Style>
                                         <Style TargetType="Image">
-                                            <Setter Property="Source" Value="/PPDEditor;component/img/document.png" />
+                                            <Setter Property="Source" Value="/img/document.png" />
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding Kind}" Value="{x:Static models:ResourceKind.Folder}">
-                                                    <Setter Property="Source" Value="/PPDEditor;component/img/folder.png" />
+                                                    <Setter Property="Source" Value="/img/folder.png" />
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Kind}" Value="{x:Static models:ResourceKind.Image}">
-                                                    <Setter Property="Source" Value="/PPDEditor;component/img/image.png" />
+                                                    <Setter Property="Source" Value="/img/image.png" />
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Kind}" Value="{x:Static models:ResourceKind.Effect}">
-                                                    <Setter Property="Source" Value="/PPDEditor;component/img/effect.png" />
+                                                    <Setter Property="Source" Value="/img/effect.png" />
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Kind}" Value="{x:Static models:ResourceKind.Sound}">
-                                                    <Setter Property="Source" Value="/PPDEditor;component/img/sound.png" />
+                                                    <Setter Property="Source" Value="/img/sound.png" />
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </Image.Style>
                                 </Image>
-                                <Image Source="/PPDEditor;component/img/disabled.png" Visibility="{Binding IsDisabled, Converter={StaticResource BoolToVisibility}}" />
+                                <Image Source="/img/disabled.png" Visibility="{Binding IsDisabled, Converter={StaticResource BoolToVisibility}}" />
                             </Grid>
                             <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
                         </StackPanel>

@@ -70,6 +70,11 @@ namespace PPDEditor
             return ViewModel.GetEvent(time);
         }
 
+        public SortedList<float, EventData> GetNoteEventBeforeTime(float time)
+        {
+            return ViewModel.GetNoteEventBeforeTime(time);
+        }
+
         public void ChangeTime(float previoustime, float newtime)
         {
             ViewModel.ChangeTime(previoustime, newtime);

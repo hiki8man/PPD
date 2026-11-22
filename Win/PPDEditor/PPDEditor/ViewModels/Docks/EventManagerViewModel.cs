@@ -115,6 +115,11 @@ namespace PPDEditor.ViewModels.Docks
             return events.GetEvent(time);
         }
 
+        public SortedList<float, EventData> GetNoteEventBeforeTime(float time)
+        {
+            return events.GetNoteEventBeforeTime(time);
+        }
+
         public float GetCorrectTime(float currentTime, float markTime)
         {
             return events.GetCorrectTime(currentTime, markTime);

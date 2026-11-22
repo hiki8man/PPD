@@ -223,7 +223,7 @@ namespace PPDEditor.ViewModels
             {
                 return;
             }
-            var componentName = Assembly.GetEntryAssembly().GetName().Name;
+            const string componentName = "PPDEditor";
             foreach (string fileName in Directory.GetFiles("Lang", String.Format("lang_{0}_*.ini", componentName)))
             {
                 if (!Regex.IsMatch(Path.GetFileName(fileName), String.Format("lang_{0}_[0-9a-zA-Z]+\\.ini", componentName)))
@@ -266,7 +266,7 @@ namespace PPDEditor.ViewModels
 
         private static void ChangeHelpUrl()
         {
-            WindowUtility.HelpForm.ChangeUrl(String.Format(@"{0}\help\{1}\index.html", Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), PPDStaticSetting.langFileISO));
+            WindowUtility.HelpForm.ChangeUrl(String.Format(@"{0}\help\{1}\index.html", Utility.AppDir, PPDStaticSetting.langFileISO));
         }
 
         #endregion

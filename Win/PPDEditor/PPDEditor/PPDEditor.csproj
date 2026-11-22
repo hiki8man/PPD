@@ -4,6 +4,7 @@
     <OutputType>WinExe</OutputType>
     <RootNamespace>PPDEditor</RootNamespace>
     <AssemblyName>PPDEditor</AssemblyName>
+    <AssemblyName Condition="'$(ModExeName)' != ''">$(ModExeName)</AssemblyName>
     <ApplicationIcon>ed.ico</ApplicationIcon>
     <Platforms>x64</Platforms>
     <UseWindowsForms>true</UseWindowsForms>
@@ -210,5 +211,9 @@
     <Resource Include="img\alert.png" />
     <Resource Include="img\folder.png" />
     <Resource Include="img\document.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="EmbeddedSkin\PPDeditor_Note_Skin.ini" LogicalName="EmbeddedSkin/PPDeditor_Note_Skin.ini" />
+    <EmbeddedResource Include="EmbeddedSkin\button_ex\*.png" LogicalName="EmbeddedSkin/button_ex/%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>

@@ -69,7 +69,7 @@
                                 <TextBox Grid.Column="2" Text="{Binding BeforeBpm, Mode=OneWay}" Height="20" IsEnabled="False" VerticalContentAlignment="Center" />
                                 <TextBlock Grid.Row="1" Text="{Binding Texts[EEFLabel13]}" VerticalAlignment="Center" />
                                 <!-- 数値でないときに出す -->
-                                <Image Grid.Row="1" Grid.Column="1" Source="/PPDEditor;component/img/alert.png" Width="16" Height="16" ToolTip="{Binding Texts[EEFError1]}">
+                                <Image Grid.Row="1" Grid.Column="1" Source="/img/alert.png" Width="16" Height="16" ToolTip="{Binding Texts[EEFError1]}">
                                     <Image.Style>
                                         <Style TargetType="Image">
                                             <Setter Property="Visibility" Value="Hidden" />

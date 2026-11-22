@@ -44,7 +44,36 @@ namespace PPDEditor.ViewModels
         private static InfoForm Info => WindowUtility.InfoForm;
 
         [ObservableProperty]
-        public partial string WindowTitle { get; set; } = "PPDEditor";
+        public partial string WindowTitle { get; set; } = FormatWindowTitle(null, AvailableDifficulty.Base);
+
+        public EditorScriptMode CurrentScriptMode
+        {
+            get { return PPDStaticSetting.ScriptMode; }
+        }
+
+        public bool RememberScriptMode
+        {
+            get { return PPDStaticSetting.RememberScriptMode; }
+            set
+            {
+                if (PPDStaticSetting.RememberScriptMode != value)
+                {
+                    PPDStaticSetting.RememberScriptMode = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        [RelayCommand]
+        private void ChangeScriptMode(EditorScriptMode mode)
+        {
+            if (PPDStaticSetting.ScriptMode != mode)
+            {
+                PPDStaticSetting.ScriptMode = mode;
+                OnPropertyChanged(nameof(CurrentScriptMode));
+                UpdateWindowTitle();
+            }
+        }
 
         /// <summary>
         /// プロジェクトを使うメニュー（上書き保存、難易度、発行）を使えるかどうか。
@@ -110,7 +139,22 @@ namespace PPDEditor.ViewModels
 
         private void ChangeWindowText()
         {
-            WindowTitle = string.Format("{0}({1}) - PPDEditor", Path.GetFileNameWithoutExtension(projectFileName), CurrentDifficulty);
+            UpdateWindowTitle();
+        }
+
+        private void UpdateWindowTitle()
+        {
+            WindowTitle = FormatWindowTitle(projectFileName, CurrentDifficulty);
+        }
+
+        private static string FormatWindowTitle(string projectFile, AvailableDifficulty difficulty)
+        {
+            var modeTag = PPDStaticSetting.ScriptMode.ToString();
+            if (string.IsNullOrEmpty(projectFile))
+            {
+                return string.Format("PPDEditor [{0}]", modeTag);
+            }
+            return string.Format("{0}({1}) - PPDEditor [{2}]", Path.GetFileNameWithoutExtension(projectFile), difficulty, modeTag);
         }
 
         #region 最近使ったプロジェクト
@@ -153,7 +197,7 @@ namespace PPDEditor.ViewModels
                 return;
             }
 
-            var dir = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+            var dir = Utility.AppDir;
             ProjectFiles.EnsureDirectory(Path.Combine(dir, "Projects"));
             var viewModel = new NewProjectWindowViewModel(Utility.Language)
             {

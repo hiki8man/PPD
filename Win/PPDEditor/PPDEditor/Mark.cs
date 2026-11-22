@@ -1,4 +1,5 @@
-﻿using PPDFramework;
+﻿using PPDEditor.Models;
+using PPDFramework;
 using PPDFramework.PPDStructure.EVDData;
 using PPDFramework.PPDStructure.PPDData;
 using System.Numerics;
@@ -12,7 +13,7 @@ namespace PPDEditor
 {
     public class Mark : GameComponent
     {
-        public const float defaultbpm = 130;
+        public static float defaultbpm => PPDStaticSetting.ScriptMode == EditorScriptMode.DivaScript ? 120f : 130f;
         protected const float autowidth = 1 / 120f;
         protected float x;
         protected float y;
@@ -107,7 +108,10 @@ namespace PPDEditor
                     Hidden = true;
                 }
             }
-            markc.Position = CalcurateMarkCPosition(Position, markc, this.time, ctime, scale, m);
+            float positionScale = PPDStaticSetting.ScriptMode == EditorScriptMode.Vet08H
+                ? (bp - PPDStaticSetting.SubtractBPM) / defaultbpm
+                : scale;
+            markc.Position = CalcurateMarkCPosition(Position, markc, this.time, ctime, positionScale, m);
             jiku.Rotation = -1 * (float)Math.PI * (this.time - ctime) * scale;
             if (jiku.Rotation >= 0)
             {
@@ -141,12 +145,258 @@ namespace PPDEditor
 
         protected Vector2 ChangeColorPositionStraight(float scale, float timediff)
         {
-            return new Vector2(300 * timediff * scale, 0);
+            return PPDStaticSetting.ScriptMode switch
+            {
+                EditorScriptMode.DivaScript => ChangeColorPositionStraightDivaScript(scale, timediff),
+                EditorScriptMode.Vet08 => ChangeColorPositionStraightVet08(scale, timediff),
+                _ => ChangeColorPositionStraightVet08H(scale, timediff)
+            };
         }
 
         protected Vector2 ChangeColorPosition(float scale, float timediff)
         {
-            return new Vector2(300 * timediff * scale, -30 * (float)Math.Sin(timediff * scale * Math.PI));
+            return PPDStaticSetting.ScriptMode switch
+            {
+                EditorScriptMode.DivaScript => ChangeColorPositionDivaScript(scale, timediff),
+                EditorScriptMode.Vet08 => ChangeColorPositionVet08(scale, timediff),
+                _ => ChangeColorPositionVet08H(scale, timediff)
+            };
+        }
+
+        private Vector2 ChangeColorPositionStraightDivaScript(float scale, float timediff)
+        {
+            double frequency;
+            if (parameters.TryGetValue("Frequency", out string frequencyParm))
+            {
+                _ = double.TryParse(frequencyParm, out frequency);
+                frequency = parameters.ContainsKey("#RightRotation") ? frequency : -frequency;
+            }
+            else
+            {
+                frequency = 0;
+            }
+            float amplitude;
+            if (parameters.TryGetValue("Amplitude", out string amplitudeParm))
+            {
+                _ = float.TryParse(amplitudeParm, out amplitude);
+            }
+            else
+            {
+                amplitude = 500f;
+            }
+            float distance;
+            if (parameters.TryGetValue("Distance", out string distanceParm))
+            {
+                _ = float.TryParse(distanceParm, out distance);
+            }
+            else
+            {
+                distance = 220000f;
+            }
+            return new Vector2(distance * 250f / 300000f * timediff * scale, (float)Math.Sin((double)(timediff * scale) * Math.PI * frequency * 0.5) * amplitude / 28.8f);
+        }
+
+        private Vector2 ChangeColorPositionDivaScript(float scale, float timediff)
+        {
+            double frequency;
+            if (parameters.TryGetValue("Frequency", out string frequencyParm))
+            {
+                if (double.TryParse(frequencyParm, out frequency))
+                {
+                    frequency = parameters.ContainsKey("#RightRotation") ? frequency : -frequency;
+                }
+                else
+                {
+                    frequency = 0;
+                }
+            }
+            else
+            {
+                frequency = parameters.ContainsKey("#RightRotation") ? 2 : -2;
+            }
+            float amplitude;
+            if (parameters.TryGetValue("Amplitude", out string amplitudeParm))
+            {
+                _ = float.TryParse(amplitudeParm, out amplitude);
+            }
+            else
+            {
+                amplitude = 500f;
+            }
+            float distance;
+            if (parameters.TryGetValue("Distance", out string distanceParm))
+            {
+                _ = float.TryParse(distanceParm, out distance);
+            }
+            else
+            {
+                distance = 300000f;
+            }
+            return new Vector2(distance * 250f / 300000f * timediff * scale, (float)Math.Sin((double)(timediff * scale) * Math.PI * frequency * 0.5) * amplitude / 28.8f);
+        }
+
+        private Vector2 ChangeColorPositionStraightVet08(float scale, float timediff)
+        {
+            float decelerationRate;
+            if (parameters.TryGetValue("DecelerationRate", out string decelerationRateParm))
+            {
+                _ = float.TryParse(decelerationRateParm, out decelerationRate);
+            }
+            else
+            {
+                decelerationRate = PPDStaticSetting.Vet08DecelerationRate;
+            }
+            float markDistance;
+            if (parameters.TryGetValue("MarkDistance", out string markDistanceParm))
+            {
+                _ = float.TryParse(markDistanceParm, out markDistance);
+                markDistance *= decelerationRate;
+            }
+            else
+            {
+                markDistance = PPDStaticSetting.Vet08MarkDistance * decelerationRate;
+            }
+            float curvature;
+            if (parameters.TryGetValue("Curvature", out string curvatureParm))
+            {
+                _ = float.TryParse(curvatureParm, out curvature);
+                curvature = parameters.ContainsKey("#RightRotation") ? curvature : -curvature;
+            }
+            else
+            {
+                curvature = parameters.ContainsKey("#RightRotation") ? PPDStaticSetting.Vet08CurvatureMulti : -PPDStaticSetting.Vet08CurvatureMulti;
+            }
+            float markSpeed;
+            if (parameters.TryGetValue("MarkSpeed", out string markSpeedParm))
+            {
+                _ = float.TryParse(markSpeedParm, out markSpeed);
+            }
+            else
+            {
+                markSpeed = PPDStaticSetting.Vet08MarkSpeed;
+            }
+            return new Vector2(markDistance * timediff * scale * markSpeed, curvature * (float)Math.Sin(timediff * scale * Math.PI * markSpeed));
+        }
+
+        private Vector2 ChangeColorPositionVet08(float scale, float timediff)
+        {
+            float markDistance;
+            if (parameters.TryGetValue("MarkDistance", out string markDistanceParm))
+            {
+                _ = float.TryParse(markDistanceParm, out markDistance);
+            }
+            else
+            {
+                markDistance = PPDStaticSetting.Vet08MarkDistance;
+            }
+            float curvature;
+            if (parameters.TryGetValue("Curvature", out string curvatureParm))
+            {
+                _ = float.TryParse(curvatureParm, out curvature);
+                curvature = parameters.ContainsKey("#RightRotation") ? curvature : -curvature;
+            }
+            else
+            {
+                curvature = parameters.ContainsKey("#RightRotation") ? PPDStaticSetting.Vet08Curvature : -PPDStaticSetting.Vet08Curvature;
+            }
+            float markSpeed;
+            if (parameters.TryGetValue("MarkSpeed", out string markSpeedParm))
+            {
+                _ = float.TryParse(markSpeedParm, out markSpeed);
+            }
+            else
+            {
+                markSpeed = PPDStaticSetting.Vet08MarkSpeed;
+            }
+            return new Vector2(markDistance * timediff * scale * markSpeed, curvature * (float)Math.Sin(timediff * scale * Math.PI * markSpeed));
+        }
+
+        private Vector2 ChangeColorPositionStraightVet08H(float scale, float timediff)
+        {
+            float markDistanceRatio;
+            if (parameters.TryGetValue("MarkDistanceRatio", out string markDistanceRatioParm))
+            {
+                _ = float.TryParse(markDistanceRatioParm, out markDistanceRatio);
+            }
+            else
+            {
+                markDistanceRatio = PPDStaticSetting.MarkDistanceRatio;
+            }
+            float markDistance = PPDStaticSetting.Vet08HMarkDistance * PPDStaticSetting.Vet08HDecelerationRate * markDistanceRatio;
+
+            float curvature;
+            if (parameters.TryGetValue("Curvature", out string curvatureParm))
+            {
+                _ = float.TryParse(curvatureParm, out curvature);
+                curvature = parameters.ContainsKey("#RightRotation") ? curvature : -curvature;
+            }
+            else
+            {
+                curvature = parameters.ContainsKey("#RightRotation") ? PPDStaticSetting.Vet08HCurvatureMulti : -PPDStaticSetting.Vet08HCurvatureMulti;
+            }
+            float markSpeed;
+            if (parameters.TryGetValue("MarkSpeed", out string markSpeedParm))
+            {
+                _ = float.TryParse(markSpeedParm, out markSpeed);
+            }
+            else
+            {
+                markSpeed = PPDStaticSetting.Vet08HMarkSpeed;
+            }
+            float frequency;
+            if (parameters.TryGetValue("Frequency", out string frequencyParm))
+            {
+                _ = float.TryParse(frequencyParm, out frequency);
+            }
+            else
+            {
+                frequency = PPDStaticSetting.Frequency;
+            }
+            return new Vector2(markDistance * timediff * scale * markSpeed, curvature * (float)Math.Sin(timediff * scale * markSpeed * Math.PI * frequency * 0.5f));
+        }
+
+        private Vector2 ChangeColorPositionVet08H(float scale, float timediff)
+        {
+            float markDistanceRatio;
+            if (parameters.TryGetValue("MarkDistanceRatio", out string markDistanceRatioParm))
+            {
+                _ = float.TryParse(markDistanceRatioParm, out markDistanceRatio);
+            }
+            else
+            {
+                markDistanceRatio = PPDStaticSetting.MarkDistanceRatio;
+            }
+            float markDistance = PPDStaticSetting.Vet08HMarkDistance * markDistanceRatio;
+
+            float curvature;
+            if (parameters.TryGetValue("Curvature", out string curvatureParm))
+            {
+                _ = float.TryParse(curvatureParm, out curvature);
+                curvature = parameters.ContainsKey("#RightRotation") ? curvature : -curvature;
+            }
+            else
+            {
+                curvature = parameters.ContainsKey("#RightRotation") ? PPDStaticSetting.Vet08HCurvature : -PPDStaticSetting.Vet08HCurvature;
+            }
+            float markSpeed;
+            if (parameters.TryGetValue("MarkSpeed", out string markSpeedParm))
+            {
+                _ = float.TryParse(markSpeedParm, out markSpeed);
+            }
+            else
+            {
+                markSpeed = PPDStaticSetting.Vet08HMarkSpeed;
+            }
+            float frequency;
+            if (parameters.TryGetValue("Frequency", out string frequencyParm))
+            {
+                _ = float.TryParse(frequencyParm, out frequency);
+            }
+            else
+            {
+                frequency = PPDStaticSetting.Frequency;
+            }
+            return new Vector2(markDistance * timediff * scale * markSpeed, curvature * (float)Math.Sin(timediff * scale * markSpeed * Math.PI * frequency * 0.5f));
         }
 
         public override void Draw()

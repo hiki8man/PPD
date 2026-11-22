@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.IO;
+using System.Reflection;
 using System.Text.RegularExpressions;
 
 namespace PPDEditor
@@ -20,6 +21,7 @@ namespace PPDEditor
         }
 
         private static readonly PPDEditorSkin skin = new();
+        internal static bool EnableEmbeddedSkin { get; set; } = true;
         readonly string[] smallcolorimagepaths = new string[(int)ButtonType.Start];
         readonly PathObject[] colorimagepaths = new PathObject[((int)ButtonType.Start + 4) * 2];
         readonly PathObject[] imagepaths = new PathObject[((int)ButtonType.Start + 4) * 2];
@@ -77,6 +79,7 @@ namespace PPDEditor
                 var setting = new SettingReader(sr.ReadToEnd());
                 sr.Close();
                 bool useNewNote = false;
+                string embeddedSkinRoot = null;
                 if (File.Exists("PPDeditor_Note_Skin.ini"))
                 {
                     using var exSr = new StreamReader("PPDeditor_Note_Skin.ini");
@@ -90,74 +93,101 @@ namespace PPDEditor
                         }
                     }
                 }
+                else if (EnableEmbeddedSkin && TryLoadEmbeddedNoteSkin(out SettingReader embeddedSetting, out embeddedSkinRoot))
+                {
+                    if (embeddedSetting.ReadBoolean("Enable"))
+                    {
+                        useNewNote = true;
+                        foreach (KeyValuePair<string, string> kvp in embeddedSetting.Dictionary)
+                        {
+                            setting.ReplaceOrAdd(kvp.Key, kvp.Value);
+                        }
+                    }
+                    else
+                    {
+                        embeddedSkinRoot = null;
+                    }
+                }
+
+                PathObject ResolveSkinPath(string relativePath)
+                {
+                    if (embeddedSkinRoot != null
+                        && (relativePath.StartsWith(@"button_ex\", StringComparison.OrdinalIgnoreCase)
+                            || relativePath.StartsWith("button_ex/", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        return PathObject.Absolute(Path.Combine(embeddedSkinRoot, relativePath));
+                    }
+                    return Utility.Path.Combine(relativePath);
+                }
+
                 for (ButtonType type = ButtonType.Square; type < ButtonType.Start; type++)
                 {
-                    colorimagepaths[(int)type] = Utility.Path.Combine(setting.ReadString("Color" + type));
-                    imagepaths[(int)type] = Utility.Path.Combine(setting.ReadString(type.ToString()));
-                    traceimagepaths[(int)type] = Utility.Path.Combine(setting.ReadString("Trace" + type));
+                    colorimagepaths[(int)type] = ResolveSkinPath(setting.ReadString("Color" + type));
+                    imagepaths[(int)type] = ResolveSkinPath(setting.ReadString(type.ToString()));
+                    traceimagepaths[(int)type] = ResolveSkinPath(setting.ReadString("Trace" + type));
                 }
-                colorimagepaths[(int)ButtonType.Start] = Utility.Path.Combine(setting["ColorSliderRight"]);
-                colorimagepaths[(int)ButtonType.Start + 1] = Utility.Path.Combine(setting["ColorSliderLeft"]);
-                colorimagepaths[(int)ButtonType.Start + 2] = Utility.Path.Combine(setting["ColorSliderRightExtra"]);
-                colorimagepaths[(int)ButtonType.Start + 3] = Utility.Path.Combine(setting["ColorSliderLeftExtra"]);
-                imagepaths[(int)ButtonType.Start] = Utility.Path.Combine(setting["SliderRight"]);
-                imagepaths[(int)ButtonType.Start + 1] = Utility.Path.Combine(setting["SliderLeft"]);
-                imagepaths[(int)ButtonType.Start + 2] = Utility.Path.Combine(setting["SliderRightExtra"]);
-                imagepaths[(int)ButtonType.Start + 3] = Utility.Path.Combine(setting["SliderLeftExtra"]);
+                colorimagepaths[(int)ButtonType.Start] = ResolveSkinPath(setting["ColorSliderRight"]);
+                colorimagepaths[(int)ButtonType.Start + 1] = ResolveSkinPath(setting["ColorSliderLeft"]);
+                colorimagepaths[(int)ButtonType.Start + 2] = ResolveSkinPath(setting["ColorSliderRightExtra"]);
+                colorimagepaths[(int)ButtonType.Start + 3] = ResolveSkinPath(setting["ColorSliderLeftExtra"]);
+                imagepaths[(int)ButtonType.Start] = ResolveSkinPath(setting["SliderRight"]);
+                imagepaths[(int)ButtonType.Start + 1] = ResolveSkinPath(setting["SliderLeft"]);
+                imagepaths[(int)ButtonType.Start + 2] = ResolveSkinPath(setting["SliderRightExtra"]);
+                imagepaths[(int)ButtonType.Start + 3] = ResolveSkinPath(setting["SliderLeftExtra"]);
                 traceimagepaths[(int)ButtonType.Start] =
                     traceimagepaths[(int)ButtonType.Start + 1] =
                     traceimagepaths[(int)ButtonType.Start + 2] =
-                    traceimagepaths[(int)ButtonType.Start + 3] = Utility.Path.Combine(setting["TraceSlider"]);
-                longnotecirclepath = Utility.Path.Combine(setting.ReadString("LongNoteCirle"));
+                    traceimagepaths[(int)ButtonType.Start + 3] = ResolveSkinPath(setting["TraceSlider"]);
+                longnotecirclepath = ResolveSkinPath(setting.ReadString("LongNoteCirle"));
                 _innerradius = float.Parse(setting.ReadString("InnerRadius"));
                 _outerradius = float.Parse(setting.ReadString("OuterRadius"));
-                axisimagepath = Utility.Path.Combine(setting.ReadString("CircleAxis"));
-                clockaxisimagepath = Utility.Path.Combine(setting.ReadString("ClockAxis"));
+                axisimagepath = ResolveSkinPath(setting.ReadString("CircleAxis"));
+                clockaxisimagepath = ResolveSkinPath(setting.ReadString("ClockAxis"));
                 for (MarkEvaluateType type = MarkEvaluateType.Cool; type <= MarkEvaluateType.Worst; type++)
                 {
-                    effectpaths[(int)type] = Utility.Path.Combine(setting.ReadString("Effect" + type));
+                    effectpaths[(int)type] = ResolveSkinPath(setting.ReadString("Effect" + type));
                 }
-                appeareffectpath = Utility.Path.Combine(setting.ReadString("EffectAppear"));
-                holdpath = Utility.Path.Combine(setting.ReadString("Hold"));
+                appeareffectpath = ResolveSkinPath(setting.ReadString("EffectAppear"));
+                holdpath = ResolveSkinPath(setting.ReadString("Hold"));
                 holdx = float.Parse(setting.ReadString("HoldX"));
                 holdy = float.Parse(setting.ReadString("HoldY"));
                 for (ButtonType type = ButtonType.Square; type < ButtonType.Start; type++)
                 {
                     colorimagepaths[(int)type + 14] = (useNewNote && setting.ContainsKey("MultiColor" + type))
-                        ? Utility.Path.Combine(setting.ReadString("MultiColor" + type))
+                        ? ResolveSkinPath(setting.ReadString("MultiColor" + type))
                         : colorimagepaths[(int)type];
                     imagepaths[(int)type + 14] = (useNewNote && setting.ContainsKey("Multi" + type.ToString()))
-                        ? Utility.Path.Combine(setting.ReadString("Multi" + type.ToString()))
+                        ? ResolveSkinPath(setting.ReadString("Multi" + type.ToString()))
                         : imagepaths[(int)type];
                 }
                 colorimagepaths[(int)ButtonType.Start + 14] = (useNewNote && setting.ContainsKey("MultiColorSliderRight"))
-                    ? Utility.Path.Combine(setting["MultiColorSliderRight"])
+                    ? ResolveSkinPath(setting["MultiColorSliderRight"])
                     : colorimagepaths[(int)ButtonType.Start];
                 colorimagepaths[(int)ButtonType.Start + 1 + 14] = (useNewNote && setting.ContainsKey("MultiColorSliderLeft"))
-                    ? Utility.Path.Combine(setting["MultiColorSliderLeft"])
+                    ? ResolveSkinPath(setting["MultiColorSliderLeft"])
                     : colorimagepaths[(int)ButtonType.Start + 1];
                 colorimagepaths[(int)ButtonType.Start + 2 + 14] = (useNewNote && setting.ContainsKey("MultiColorSliderRightExtra"))
-                    ? Utility.Path.Combine(setting["MultiColorSliderRightExtra"])
+                    ? ResolveSkinPath(setting["MultiColorSliderRightExtra"])
                     : colorimagepaths[(int)ButtonType.Start + 2];
                 colorimagepaths[(int)ButtonType.Start + 3 + 14] = (useNewNote && setting.ContainsKey("MultiColorSliderLeftExtra"))
-                    ? Utility.Path.Combine(setting["MultiColorSliderLeftExtra"])
+                    ? ResolveSkinPath(setting["MultiColorSliderLeftExtra"])
                     : colorimagepaths[(int)ButtonType.Start + 3];
                 imagepaths[(int)ButtonType.Start + 14] = (useNewNote && setting.ContainsKey("MultiSliderRight"))
-                    ? Utility.Path.Combine(setting["MultiSliderRight"])
+                    ? ResolveSkinPath(setting["MultiSliderRight"])
                     : imagepaths[(int)ButtonType.Start];
                 imagepaths[(int)ButtonType.Start + 1 + 14] = (useNewNote && setting.ContainsKey("MultiSliderLeft"))
-                    ? Utility.Path.Combine(setting["MultiSliderLeft"])
+                    ? ResolveSkinPath(setting["MultiSliderLeft"])
                     : imagepaths[(int)ButtonType.Start + 1];
                 imagepaths[(int)ButtonType.Start + 2 + 14] = (useNewNote && setting.ContainsKey("MultiSliderRightExtra"))
-                    ? Utility.Path.Combine(setting["MultiSliderRightExtra"])
+                    ? ResolveSkinPath(setting["MultiSliderRightExtra"])
                     : imagepaths[(int)ButtonType.Start + 2];
                 imagepaths[(int)ButtonType.Start + 3 + 14] = (useNewNote && setting.ContainsKey("MultiSliderLeftExtra"))
-                    ? Utility.Path.Combine(setting["MultiSliderLeftExtra"])
+                    ? ResolveSkinPath(setting["MultiSliderLeftExtra"])
                     : (useNewNote && setting.ContainsKey("MultiColorSliderLeftExtra"))
-                        ? Utility.Path.Combine(setting["MultiColorSliderLeftExtra"])
+                        ? ResolveSkinPath(setting["MultiColorSliderLeftExtra"])
                         : imagepaths[(int)ButtonType.Start + 3];
                 exholdpath = (useNewNote && setting.ContainsKey("MultiHold"))
-                    ? Utility.Path.Combine(setting.ReadString("MultiHold"))
+                    ? ResolveSkinPath(setting.ReadString("MultiHold"))
                     : holdpath;
                 exholdx = (useNewNote && setting.ContainsKey("MultiHoldX"))
                     ? float.Parse(setting.ReadString("MultiHoldX"))
@@ -166,6 +196,48 @@ namespace PPDEditor
                     ? float.Parse(setting.ReadString("MultiHoldY"))
                     : holdy;
             }
+        }
+
+        private static bool TryLoadEmbeddedNoteSkin(out SettingReader setting, out string skinRoot)
+        {
+            setting = null;
+            skinRoot = null;
+            var assembly = typeof(PPDEditorSkin).Assembly;
+            using var iniStream = assembly.GetManifestResourceStream("EmbeddedSkin/PPDeditor_Note_Skin.ini");
+            if (iniStream == null)
+            {
+                return false;
+            }
+            using (var reader = new StreamReader(iniStream))
+            {
+                setting = new SettingReader(reader.ReadToEnd());
+            }
+
+            skinRoot = Path.Combine(Path.GetTempPath(), "PPDEditor_Mod", "skin");
+            var buttonExDir = Path.Combine(skinRoot, "button_ex");
+            Directory.CreateDirectory(buttonExDir);
+            const string prefix = "EmbeddedSkin/button_ex/";
+            foreach (string resourceName in assembly.GetManifestResourceNames())
+            {
+                if (!resourceName.StartsWith(prefix, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+                var fileName = resourceName[prefix.Length..];
+                var targetPath = Path.Combine(buttonExDir, fileName);
+                using var stream = assembly.GetManifestResourceStream(resourceName);
+                if (stream == null)
+                {
+                    continue;
+                }
+                if (File.Exists(targetPath) && new FileInfo(targetPath).Length == stream.Length)
+                {
+                    continue;
+                }
+                using var fs = File.Create(targetPath);
+                stream.CopyTo(fs);
+            }
+            return true;
         }
 
         public void Initialize(string filename)

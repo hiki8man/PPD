@@ -1,9 +1,9 @@
 ﻿using PPDEditor.Controls;
 using PPDEditor.Forms;
+using PPDEditor.Models;
 using PPDFramework;
 using System;
 using System.IO;
-using System.Reflection;
 using System.Windows;
 
 namespace PPDEditor
@@ -14,7 +14,7 @@ namespace PPDEditor
         {
             get
             {
-                return Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                return AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
             }
         }
 
@@ -38,14 +38,14 @@ namespace PPDEditor
         /// アプリケーションのメイン エントリ ポイントです。
         /// </summary>
         [STAThread]
-        static void Main()
+        static void Main(string[] args)
         {
             System.Environment.CurrentDirectory = AppDir;
             var errorHandler = new ErrorHandlerPPD();
             errorHandler.Initialize();
             var application = new Application
             {
-                ShutdownMode = ShutdownMode.OnMainWindowClose
+                ShutdownMode = ShutdownMode.OnExplicitShutdown
             };
             // 画面の操作の中で起きた例外は、以前と同じく知らせてから続ける（ゲームのフレームの中の例外は Game が止めて、下で処理する）
             application.DispatcherUnhandledException += (sender, e) =>
@@ -53,6 +53,11 @@ namespace PPDEditor
                 errorHandler.ProcessError(e.Exception);
                 e.Handled = true;
             };
+            if (!TrySelectStartupMode(args))
+            {
+                return;
+            }
+            application.ShutdownMode = ShutdownMode.OnMainWindowClose;
             Game game = null;
             try
             {
@@ -87,6 +92,35 @@ namespace PPDEditor
                 game?.Window.Dispose();
                 GameView.DestroyRenderWindow();
             }
+        }
+
+        private static bool TrySelectStartupMode(string[] args)
+        {
+            if (args != null)
+            {
+                for (int i = 0; i < args.Length - 1; i++)
+                {
+                    if ((args[i].Equals("--mode", StringComparison.OrdinalIgnoreCase)
+                            || args[i].Equals("-m", StringComparison.OrdinalIgnoreCase))
+                        && Enum.TryParse(args[i + 1], true, out EditorScriptMode cliMode))
+                    {
+                        PPDStaticSetting.ScriptMode = cliMode;
+                        return true;
+                    }
+                }
+            }
+            if (PPDStaticSetting.RememberScriptMode)
+            {
+                return true;
+            }
+            var dialog = new ModeSelectWindow(PPDStaticSetting.ScriptMode, PPDStaticSetting.RememberScriptMode);
+            if (dialog.ShowDialog() != true)
+            {
+                return false;
+            }
+            PPDStaticSetting.ScriptMode = dialog.SelectedMode;
+            PPDStaticSetting.RememberScriptMode = dialog.RememberChoice;
+            return true;
         }
     }
 }

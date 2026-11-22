@@ -18,10 +18,10 @@
                         <Image Width="16" Height="16" Margin="0,0,3,0">
                             <Image.Style>
                                 <Style TargetType="Image">
-                                    <Setter Property="Source" Value="/PPDEditor;component/img/folder.png" />
+                                    <Setter Property="Source" Value="/img/folder.png" />
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding IsScript}" Value="True">
-                                            <Setter Property="Source" Value="/PPDEditor;component/img/document.png" />
+                                            <Setter Property="Source" Value="/img/document.png" />
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>

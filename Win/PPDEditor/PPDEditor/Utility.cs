@@ -114,7 +114,7 @@ namespace PPDEditor
         {
             get
             {
-                appDir ??= System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                appDir ??= AppContext.BaseDirectory.TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
 
                 return appDir;
             }

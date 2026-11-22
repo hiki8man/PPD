@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:ad="https://github.com/Dirkster99/AvalonDock"
         xmlns:local="clr-namespace:PPDEditor"
+        xmlns:models="clr-namespace:PPDEditor.Models"
         xmlns:vm="clr-namespace:PPDEditor.ViewModels"
         xmlns:conv="clr-namespace:PPDEditor.Converters"
         mc:Ignorable="d" d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel}"
@@ -214,6 +215,16 @@
                         <MenuItem AutomationProperties.AutomationId="OthersMenu" Header="{Binding Texts[Others]}">
                             <MenuItem Header="{Binding Texts[HideToolBar]}" IsCheckable="True" IsChecked="{Binding IsMenuHidden, Mode=TwoWay}" />
                             <MenuItem AutomationProperties.AutomationId="SettingMenuItem" Header="{Binding Texts[Setting]}" Command="{Binding OpenSettingCommand}" />
+                        </MenuItem>
+                        <MenuItem AutomationProperties.AutomationId="ScriptModeMenu" Header="模式">
+                            <MenuItem Header="Vet08H" Command="{Binding ChangeScriptModeCommand}" CommandParameter="{x:Static models:EditorScriptMode.Vet08H}"
+                                      IsChecked="{Binding CurrentScriptMode, Mode=OneWay, Converter={StaticResource EnumToBoolean}, ConverterParameter=Vet08H}" />
+                            <MenuItem Header="Vet08" Command="{Binding ChangeScriptModeCommand}" CommandParameter="{x:Static models:EditorScriptMode.Vet08}"
+                                      IsChecked="{Binding CurrentScriptMode, Mode=OneWay, Converter={StaticResource EnumToBoolean}, ConverterParameter=Vet08}" />
+                            <MenuItem Header="DivaScript" Command="{Binding ChangeScriptModeCommand}" CommandParameter="{x:Static models:EditorScriptMode.DivaScript}"
+                                      IsChecked="{Binding CurrentScriptMode, Mode=OneWay, Converter={StaticResource EnumToBoolean}, ConverterParameter=DivaScript}" />
+                            <Separator />
+                            <MenuItem Header="记住选择，下次启动直接进入" IsCheckable="True" IsChecked="{Binding RememberScriptMode, Mode=TwoWay}" />
                         </MenuItem>
                     </Menu>
                     <ToolBarTray Background="Transparent" IsLocked="True">

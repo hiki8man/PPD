@@ -87,7 +87,17 @@ namespace UnitTests.PPDEditor
             using var folder = new TempFolder(setCurrentDirectory: true);
             folder.Write("defaultskin.ini", DefaultSkin);
 
-            var skin = NewSkin();
+            var prev = PPDEditorSkin.EnableEmbeddedSkin;
+            PPDEditorSkin.EnableEmbeddedSkin = false;
+            PPDEditorSkin skin;
+            try
+            {
+                skin = NewSkin();
+            }
+            finally
+            {
+                PPDEditorSkin.EnableEmbeddedSkin = prev;
+            }
 
             Assert.Equal(Image("maru.png"), skin.GetMarkImagePath(ButtonType.Circle).ToString());
             Assert.Equal(Image("maruc.png"), skin.GetMarkColorImagePath(ButtonType.Circle).ToString());

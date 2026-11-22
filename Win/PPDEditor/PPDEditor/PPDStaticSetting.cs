@@ -1,5 +1,6 @@
 ﻿using PPDConfiguration;
 using PPDEditor.Forms;
+using PPDEditor.Models;
 using System;
 using System.Drawing;
 using System.Globalization;
@@ -31,6 +32,27 @@ namespace PPDEditor
         public static int CanvasColorIndex;
         public static int[] Moves = new int[8];
         public static int[] Angles = new int[8];
+        public static EditorScriptMode ScriptMode = EditorScriptMode.Vet08H;
+        public static bool RememberScriptMode;
+        public static float Vet08MarkDistance = 300f;
+        public static float Vet08Curvature = 20f;
+        public static float Vet08CurvatureMulti;
+        public static float Vet08MarkSpeed = 1f;
+        public static float Vet08DecelerationRate = 0.72f;
+        public static float Vet08HMarkDistance = 250f;
+        public static float Vet08HCurvature = 17.36111111f;
+        public static float Vet08HCurvatureMulti;
+        public static float Vet08HMarkSpeed = 1f;
+        public static float Vet08HDecelerationRate = 0.733333333f;
+        public static float Frequency = 2f;
+        public static float MarkDistanceRatio = 1f;
+        public static float SubtractBPM;
+
+        public static float MarkDistance => ScriptMode == EditorScriptMode.Vet08 ? Vet08MarkDistance : Vet08HMarkDistance;
+        public static float Curvature => ScriptMode == EditorScriptMode.Vet08 ? Vet08Curvature : Vet08HCurvature;
+        public static float CurvatureMulti => ScriptMode == EditorScriptMode.Vet08 ? Vet08CurvatureMulti : Vet08HCurvatureMulti;
+        public static float MarkSpeed => ScriptMode == EditorScriptMode.Vet08 ? Vet08MarkSpeed : Vet08HMarkSpeed;
+        public static float DecelerationRate => ScriptMode == EditorScriptMode.Vet08 ? Vet08DecelerationRate : Vet08HDecelerationRate;
 
         static PPDStaticSetting()
         {
@@ -98,6 +120,38 @@ namespace PPDEditor
                 Moves[i] = ReadInt(setting, String.Format("Move{0}", i), 1);
                 Angles[i] = ReadInt(setting, String.Format("Angle{0}", i), 10);
             }
+            if (Enum.TryParse(setting.ReadString("ScriptMode"), true, out EditorScriptMode parsedMode))
+            {
+                ScriptMode = parsedMode;
+            }
+            else
+            {
+                ScriptMode = EditorScriptMode.Vet08H;
+            }
+            RememberScriptMode = ReadBoolean(setting, "RememberScriptMode");
+            Vet08MarkDistance = ReadFloat(setting, "Vet08_MarkDistance", 300f);
+            Vet08Curvature = ReadFloat(setting, "Vet08_Curvature", 20f);
+            Vet08CurvatureMulti = ReadFloat(setting, "Vet08_CurvatureMulti", 0f);
+            Vet08MarkSpeed = ReadFloat(setting, "Vet08_MarkSpeed", 1f);
+            Vet08DecelerationRate = ReadFloat(setting, "Vet08_DecelerationRate", 0.72f);
+            Vet08HMarkDistance = ReadFloatWithFallback(setting, "Vet08H_MarkDistance", "MarkDistance", 250f);
+            Vet08HCurvature = ReadFloatWithFallback(setting, "Vet08H_Curvature", "Curvature", 17.36111111f);
+            Vet08HCurvatureMulti = ReadFloatWithFallback(setting, "Vet08H_CurvatureMulti", "CurvatureMulti", 0f);
+            Vet08HMarkSpeed = ReadFloatWithFallback(setting, "Vet08H_MarkSpeed", "MarkSpeed", 1f);
+            Vet08HDecelerationRate = ReadFloatWithFallback(setting, "Vet08H_DecelerationRate", "DecelerationRate", 0.733333333f);
+            Frequency = ReadFloat(setting, "Frequency", 2f);
+            MarkDistanceRatio = ReadFloat(setting, "MarkDistanceRatio", 1f);
+            SubtractBPM = ReadFloat(setting, "SubtractBPM", 0f);
+        }
+
+        private static float ReadFloatWithFallback(SettingReader setting, string primaryKey, string fallbackKey, float error)
+        {
+            var val = setting.ReadString(primaryKey);
+            if (float.TryParse(val, NumberStyles.Float, CultureInfo.InvariantCulture, out float ret))
+            {
+                return ret;
+            }
+            return ReadFloat(setting, fallbackKey, error);
         }
 
         private static int ReadInt(SettingReader setting, string key, int error)

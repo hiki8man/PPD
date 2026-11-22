@@ -130,6 +130,21 @@ namespace PPDEditor.Models
                 setting.ReplaceOrAdd(String.Format("Move{0}", i), PPDStaticSetting.Moves[i]);
                 setting.ReplaceOrAdd(String.Format("Angle{0}", i), PPDStaticSetting.Angles[i]);
             }
+            setting.ReplaceOrAdd("ScriptMode", PPDStaticSetting.ScriptMode.ToString());
+            setting.ReplaceOrAdd("RememberScriptMode", PPDStaticSetting.RememberScriptMode);
+            setting.ReplaceOrAdd("Vet08_MarkDistance", PPDStaticSetting.Vet08MarkDistance);
+            setting.ReplaceOrAdd("Vet08_Curvature", PPDStaticSetting.Vet08Curvature);
+            setting.ReplaceOrAdd("Vet08_CurvatureMulti", PPDStaticSetting.Vet08CurvatureMulti);
+            setting.ReplaceOrAdd("Vet08_MarkSpeed", PPDStaticSetting.Vet08MarkSpeed);
+            setting.ReplaceOrAdd("Vet08_DecelerationRate", PPDStaticSetting.Vet08DecelerationRate);
+            setting.ReplaceOrAdd("Vet08H_MarkDistance", PPDStaticSetting.Vet08HMarkDistance);
+            setting.ReplaceOrAdd("Vet08H_Curvature", PPDStaticSetting.Vet08HCurvature);
+            setting.ReplaceOrAdd("Vet08H_CurvatureMulti", PPDStaticSetting.Vet08HCurvatureMulti);
+            setting.ReplaceOrAdd("Vet08H_MarkSpeed", PPDStaticSetting.Vet08HMarkSpeed);
+            setting.ReplaceOrAdd("Vet08H_DecelerationRate", PPDStaticSetting.Vet08HDecelerationRate);
+            setting.ReplaceOrAdd("Frequency", PPDStaticSetting.Frequency);
+            setting.ReplaceOrAdd("MarkDistanceRatio", PPDStaticSetting.MarkDistanceRatio);
+            setting.ReplaceOrAdd("SubtractBPM", PPDStaticSetting.SubtractBPM);
             using SettingWriter sw = new(path, false);
             foreach (KeyValuePair<string, string> kvp in setting.Dictionary)
             {

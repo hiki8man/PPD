@@ -154,6 +154,24 @@ namespace PPDEditor.Models
             return last;
         }
 
+        public SortedList<float, EventData> GetNoteEventBeforeTime(float time)
+        {
+            var eventList = new SortedList<float, EventData>();
+            foreach (KeyValuePair<float, EventData> pair in data)
+            {
+                if (pair.Key > time)
+                {
+                    break;
+                }
+                if (pair.Value.BPMRapidChange)
+                {
+                    eventList.Clear();
+                }
+                eventList.Add(pair.Key, pair.Value);
+            }
+            return eventList;
+        }
+
         /// <summary>
         /// その時間に有効なイベントの番号です（その時間より前のイベントがなければ -1）。
         /// </summary>
