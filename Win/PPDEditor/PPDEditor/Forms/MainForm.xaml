@@ -216,15 +216,16 @@
                             <MenuItem Header="{Binding Texts[HideToolBar]}" IsCheckable="True" IsChecked="{Binding IsMenuHidden, Mode=TwoWay}" />
                             <MenuItem AutomationProperties.AutomationId="SettingMenuItem" Header="{Binding Texts[Setting]}" Command="{Binding OpenSettingCommand}" />
                         </MenuItem>
-                        <MenuItem AutomationProperties.AutomationId="ScriptModeMenu" Header="模式">
-                            <MenuItem Header="Vet08H" Command="{Binding ChangeScriptModeCommand}" CommandParameter="{x:Static models:EditorScriptMode.Vet08H}"
-                                      IsChecked="{Binding CurrentScriptMode, Mode=OneWay, Converter={StaticResource EnumToBoolean}, ConverterParameter=Vet08H}" />
+                        <MenuItem AutomationProperties.AutomationId="ScriptModeMenu" Header="{Binding PreviewScriptMenuText}">
                             <MenuItem Header="Vet08" Command="{Binding ChangeScriptModeCommand}" CommandParameter="{x:Static models:EditorScriptMode.Vet08}"
                                       IsChecked="{Binding CurrentScriptMode, Mode=OneWay, Converter={StaticResource EnumToBoolean}, ConverterParameter=Vet08}" />
+                            <MenuItem Header="Vet08H" Command="{Binding ChangeScriptModeCommand}" CommandParameter="{x:Static models:EditorScriptMode.Vet08H}"
+                                      IsChecked="{Binding CurrentScriptMode, Mode=OneWay, Converter={StaticResource EnumToBoolean}, ConverterParameter=Vet08H}" />
                             <MenuItem Header="DivaScript" Command="{Binding ChangeScriptModeCommand}" CommandParameter="{x:Static models:EditorScriptMode.DivaScript}"
                                       IsChecked="{Binding CurrentScriptMode, Mode=OneWay, Converter={StaticResource EnumToBoolean}, ConverterParameter=DivaScript}" />
                             <Separator />
-                            <MenuItem Header="记住选择，下次启动直接进入" IsCheckable="True" IsChecked="{Binding RememberScriptMode, Mode=TwoWay}" />
+                            <MenuItem Header="{Binding UseCustomNoteSkinText}" IsCheckable="True" IsChecked="{Binding UseCustomNoteSkin, Mode=TwoWay}" />
+                            <MenuItem Header="{Binding RememberScriptModeText}" IsCheckable="True" IsChecked="{Binding RememberScriptMode, Mode=TwoWay}" />
                         </MenuItem>
                     </Menu>
                     <ToolBarTray Background="Transparent" IsLocked="True">

@@ -1,11 +1,12 @@
 ﻿using PPDConfiguration;
 using PPDFramework;
+using PPDFramework.Resource;
+using PPDFramework.Sprites;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.IO;
-using System.Reflection;
 using System.Text.RegularExpressions;
 
 namespace PPDEditor
@@ -23,6 +24,8 @@ namespace PPDEditor
         private static readonly PPDEditorSkin skin = new();
         internal static bool EnableEmbeddedSkin { get; set; } = true;
         readonly string[] smallcolorimagepaths = new string[(int)ButtonType.Start];
+        readonly PathObject[] defaultColorImagePaths = new PathObject[((int)ButtonType.Start + 4) * 2];
+        readonly PathObject[] defaultImagePaths = new PathObject[((int)ButtonType.Start + 4) * 2];
         readonly PathObject[] colorimagepaths = new PathObject[((int)ButtonType.Start + 4) * 2];
         readonly PathObject[] imagepaths = new PathObject[((int)ButtonType.Start + 4) * 2];
         readonly PathObject[] traceimagepaths = new PathObject[(int)ButtonType.Start + 4];
@@ -30,15 +33,22 @@ namespace PPDEditor
         readonly float _innerradius;
         readonly float _outerradius;
         readonly PathObject axisimagepath;
+        readonly PathObject defaultClockAxisImagePath;
         readonly PathObject clockaxisimagepath;
         readonly PathObject[] effectpaths = new PathObject[(int)MarkEvaluateType.Worst + 1];
         readonly PathObject appeareffectpath;
+        readonly PathObject defaultHoldPath;
         readonly PathObject holdpath;
         readonly PathObject exholdpath;
+        readonly float defaultHoldX;
+        readonly float defaultHoldY;
         readonly float holdx;
         readonly float holdy;
         readonly float exholdx;
         readonly float exholdy;
+        readonly bool hasCustomNoteSkin;
+
+        private bool UseCustomSkinActive => hasCustomNoteSkin && PPDStaticSetting.UseCustomNoteSkin;
 
         public static PPDEditorSkin Skin
         {
@@ -76,168 +86,205 @@ namespace PPDEditor
             if (File.Exists("defaultskin.ini"))
             {
                 var sr = new StreamReader("defaultskin.ini");
-                var setting = new SettingReader(sr.ReadToEnd());
+                var defaultText = sr.ReadToEnd();
                 sr.Close();
-                bool useNewNote = false;
-                string embeddedSkinRoot = null;
+                var defaultSetting = new SettingReader(defaultText);
+                LoadNotePaths(defaultSetting, false, defaultColorImagePaths, defaultImagePaths, out defaultClockAxisImagePath, out defaultHoldPath, out defaultHoldX, out defaultHoldY, out _, out _, out _);
+
+                for (ButtonType type = ButtonType.Square; type < ButtonType.Start; type++)
+                {
+                    traceimagepaths[(int)type] = Utility.Path.Combine(defaultSetting.ReadString("Trace" + type));
+                }
+                traceimagepaths[(int)ButtonType.Start] =
+                    traceimagepaths[(int)ButtonType.Start + 1] =
+                    traceimagepaths[(int)ButtonType.Start + 2] =
+                    traceimagepaths[(int)ButtonType.Start + 3] = Utility.Path.Combine(defaultSetting["TraceSlider"]);
+                longnotecirclepath = Utility.Path.Combine(defaultSetting.ReadString("LongNoteCirle"));
+                _innerradius = float.Parse(defaultSetting.ReadString("InnerRadius"));
+                _outerradius = float.Parse(defaultSetting.ReadString("OuterRadius"));
+                axisimagepath = Utility.Path.Combine(defaultSetting.ReadString("CircleAxis"));
+                for (MarkEvaluateType type = MarkEvaluateType.Cool; type <= MarkEvaluateType.Worst; type++)
+                {
+                    effectpaths[(int)type] = Utility.Path.Combine(defaultSetting.ReadString("Effect" + type));
+                }
+                appeareffectpath = Utility.Path.Combine(defaultSetting.ReadString("EffectAppear"));
+
+                var customSetting = new SettingReader(defaultText);
                 if (File.Exists("PPDeditor_Note_Skin.ini"))
                 {
                     using var exSr = new StreamReader("PPDeditor_Note_Skin.ini");
                     var exSetting = new SettingReader(exSr.ReadToEnd());
                     if (exSetting.ReadBoolean("Enable"))
                     {
-                        useNewNote = true;
+                        hasCustomNoteSkin = true;
                         foreach (KeyValuePair<string, string> kvp in exSetting.Dictionary)
                         {
-                            setting.ReplaceOrAdd(kvp.Key, kvp.Value);
+                            customSetting.ReplaceOrAdd(kvp.Key, kvp.Value);
                         }
                     }
                 }
-                else if (EnableEmbeddedSkin && TryLoadEmbeddedNoteSkin(out SettingReader embeddedSetting, out embeddedSkinRoot))
+                else if (EnableEmbeddedSkin && TryReadEmbeddedNoteSkinIni(out SettingReader embeddedSetting))
                 {
                     if (embeddedSetting.ReadBoolean("Enable"))
                     {
-                        useNewNote = true;
+                        hasCustomNoteSkin = true;
                         foreach (KeyValuePair<string, string> kvp in embeddedSetting.Dictionary)
                         {
-                            setting.ReplaceOrAdd(kvp.Key, kvp.Value);
+                            customSetting.ReplaceOrAdd(kvp.Key, kvp.Value);
                         }
                     }
-                    else
-                    {
-                        embeddedSkinRoot = null;
-                    }
                 }
 
-                PathObject ResolveSkinPath(string relativePath)
-                {
-                    if (embeddedSkinRoot != null
-                        && (relativePath.StartsWith(@"button_ex\", StringComparison.OrdinalIgnoreCase)
-                            || relativePath.StartsWith("button_ex/", StringComparison.OrdinalIgnoreCase)))
-                    {
-                        return PathObject.Absolute(Path.Combine(embeddedSkinRoot, relativePath));
-                    }
-                    return Utility.Path.Combine(relativePath);
-                }
-
-                for (ButtonType type = ButtonType.Square; type < ButtonType.Start; type++)
-                {
-                    colorimagepaths[(int)type] = ResolveSkinPath(setting.ReadString("Color" + type));
-                    imagepaths[(int)type] = ResolveSkinPath(setting.ReadString(type.ToString()));
-                    traceimagepaths[(int)type] = ResolveSkinPath(setting.ReadString("Trace" + type));
-                }
-                colorimagepaths[(int)ButtonType.Start] = ResolveSkinPath(setting["ColorSliderRight"]);
-                colorimagepaths[(int)ButtonType.Start + 1] = ResolveSkinPath(setting["ColorSliderLeft"]);
-                colorimagepaths[(int)ButtonType.Start + 2] = ResolveSkinPath(setting["ColorSliderRightExtra"]);
-                colorimagepaths[(int)ButtonType.Start + 3] = ResolveSkinPath(setting["ColorSliderLeftExtra"]);
-                imagepaths[(int)ButtonType.Start] = ResolveSkinPath(setting["SliderRight"]);
-                imagepaths[(int)ButtonType.Start + 1] = ResolveSkinPath(setting["SliderLeft"]);
-                imagepaths[(int)ButtonType.Start + 2] = ResolveSkinPath(setting["SliderRightExtra"]);
-                imagepaths[(int)ButtonType.Start + 3] = ResolveSkinPath(setting["SliderLeftExtra"]);
-                traceimagepaths[(int)ButtonType.Start] =
-                    traceimagepaths[(int)ButtonType.Start + 1] =
-                    traceimagepaths[(int)ButtonType.Start + 2] =
-                    traceimagepaths[(int)ButtonType.Start + 3] = ResolveSkinPath(setting["TraceSlider"]);
-                longnotecirclepath = ResolveSkinPath(setting.ReadString("LongNoteCirle"));
-                _innerradius = float.Parse(setting.ReadString("InnerRadius"));
-                _outerradius = float.Parse(setting.ReadString("OuterRadius"));
-                axisimagepath = ResolveSkinPath(setting.ReadString("CircleAxis"));
-                clockaxisimagepath = ResolveSkinPath(setting.ReadString("ClockAxis"));
-                for (MarkEvaluateType type = MarkEvaluateType.Cool; type <= MarkEvaluateType.Worst; type++)
-                {
-                    effectpaths[(int)type] = ResolveSkinPath(setting.ReadString("Effect" + type));
-                }
-                appeareffectpath = ResolveSkinPath(setting.ReadString("EffectAppear"));
-                holdpath = ResolveSkinPath(setting.ReadString("Hold"));
-                holdx = float.Parse(setting.ReadString("HoldX"));
-                holdy = float.Parse(setting.ReadString("HoldY"));
-                for (ButtonType type = ButtonType.Square; type < ButtonType.Start; type++)
-                {
-                    colorimagepaths[(int)type + 14] = (useNewNote && setting.ContainsKey("MultiColor" + type))
-                        ? ResolveSkinPath(setting.ReadString("MultiColor" + type))
-                        : colorimagepaths[(int)type];
-                    imagepaths[(int)type + 14] = (useNewNote && setting.ContainsKey("Multi" + type.ToString()))
-                        ? ResolveSkinPath(setting.ReadString("Multi" + type.ToString()))
-                        : imagepaths[(int)type];
-                }
-                colorimagepaths[(int)ButtonType.Start + 14] = (useNewNote && setting.ContainsKey("MultiColorSliderRight"))
-                    ? ResolveSkinPath(setting["MultiColorSliderRight"])
-                    : colorimagepaths[(int)ButtonType.Start];
-                colorimagepaths[(int)ButtonType.Start + 1 + 14] = (useNewNote && setting.ContainsKey("MultiColorSliderLeft"))
-                    ? ResolveSkinPath(setting["MultiColorSliderLeft"])
-                    : colorimagepaths[(int)ButtonType.Start + 1];
-                colorimagepaths[(int)ButtonType.Start + 2 + 14] = (useNewNote && setting.ContainsKey("MultiColorSliderRightExtra"))
-                    ? ResolveSkinPath(setting["MultiColorSliderRightExtra"])
-                    : colorimagepaths[(int)ButtonType.Start + 2];
-                colorimagepaths[(int)ButtonType.Start + 3 + 14] = (useNewNote && setting.ContainsKey("MultiColorSliderLeftExtra"))
-                    ? ResolveSkinPath(setting["MultiColorSliderLeftExtra"])
-                    : colorimagepaths[(int)ButtonType.Start + 3];
-                imagepaths[(int)ButtonType.Start + 14] = (useNewNote && setting.ContainsKey("MultiSliderRight"))
-                    ? ResolveSkinPath(setting["MultiSliderRight"])
-                    : imagepaths[(int)ButtonType.Start];
-                imagepaths[(int)ButtonType.Start + 1 + 14] = (useNewNote && setting.ContainsKey("MultiSliderLeft"))
-                    ? ResolveSkinPath(setting["MultiSliderLeft"])
-                    : imagepaths[(int)ButtonType.Start + 1];
-                imagepaths[(int)ButtonType.Start + 2 + 14] = (useNewNote && setting.ContainsKey("MultiSliderRightExtra"))
-                    ? ResolveSkinPath(setting["MultiSliderRightExtra"])
-                    : imagepaths[(int)ButtonType.Start + 2];
-                imagepaths[(int)ButtonType.Start + 3 + 14] = (useNewNote && setting.ContainsKey("MultiSliderLeftExtra"))
-                    ? ResolveSkinPath(setting["MultiSliderLeftExtra"])
-                    : (useNewNote && setting.ContainsKey("MultiColorSliderLeftExtra"))
-                        ? ResolveSkinPath(setting["MultiColorSliderLeftExtra"])
-                        : imagepaths[(int)ButtonType.Start + 3];
-                exholdpath = (useNewNote && setting.ContainsKey("MultiHold"))
-                    ? ResolveSkinPath(setting.ReadString("MultiHold"))
-                    : holdpath;
-                exholdx = (useNewNote && setting.ContainsKey("MultiHoldX"))
-                    ? float.Parse(setting.ReadString("MultiHoldX"))
-                    : holdx;
-                exholdy = (useNewNote && setting.ContainsKey("MultiHoldY"))
-                    ? float.Parse(setting.ReadString("MultiHoldY"))
-                    : holdy;
+                LoadNotePaths(customSetting, hasCustomNoteSkin, colorimagepaths, imagepaths, out clockaxisimagepath, out holdpath, out holdx, out holdy, out exholdpath, out exholdx, out exholdy);
             }
         }
 
-        private static bool TryLoadEmbeddedNoteSkin(out SettingReader setting, out string skinRoot)
+        private static void LoadNotePaths(
+            SettingReader setting,
+            bool useNewNote,
+            PathObject[] colorPaths,
+            PathObject[] markPaths,
+            out PathObject clockAxisPath,
+            out PathObject holdImgPath,
+            out float holdOffsetX,
+            out float holdOffsetY,
+            out PathObject multiHoldImgPath,
+            out float multiHoldOffsetX,
+            out float multiHoldOffsetY)
+        {
+            for (ButtonType type = ButtonType.Square; type < ButtonType.Start; type++)
+            {
+                colorPaths[(int)type] = Utility.Path.Combine(setting.ReadString("Color" + type));
+                markPaths[(int)type] = Utility.Path.Combine(setting.ReadString(type.ToString()));
+            }
+            colorPaths[(int)ButtonType.Start] = Utility.Path.Combine(setting["ColorSliderRight"]);
+            colorPaths[(int)ButtonType.Start + 1] = Utility.Path.Combine(setting["ColorSliderLeft"]);
+            colorPaths[(int)ButtonType.Start + 2] = Utility.Path.Combine(setting["ColorSliderRightExtra"]);
+            colorPaths[(int)ButtonType.Start + 3] = Utility.Path.Combine(setting["ColorSliderLeftExtra"]);
+            markPaths[(int)ButtonType.Start] = Utility.Path.Combine(setting["SliderRight"]);
+            markPaths[(int)ButtonType.Start + 1] = Utility.Path.Combine(setting["SliderLeft"]);
+            markPaths[(int)ButtonType.Start + 2] = Utility.Path.Combine(setting["SliderRightExtra"]);
+            markPaths[(int)ButtonType.Start + 3] = Utility.Path.Combine(setting["SliderLeftExtra"]);
+            clockAxisPath = Utility.Path.Combine(setting.ReadString("ClockAxis"));
+            holdImgPath = Utility.Path.Combine(setting.ReadString("Hold"));
+            holdOffsetX = float.Parse(setting.ReadString("HoldX"));
+            holdOffsetY = float.Parse(setting.ReadString("HoldY"));
+
+            for (ButtonType type = ButtonType.Square; type < ButtonType.Start; type++)
+            {
+                colorPaths[(int)type + 14] = (useNewNote && setting.ContainsKey("MultiColor" + type))
+                    ? Utility.Path.Combine(setting.ReadString("MultiColor" + type))
+                    : colorPaths[(int)type];
+                markPaths[(int)type + 14] = (useNewNote && setting.ContainsKey("Multi" + type.ToString()))
+                    ? Utility.Path.Combine(setting.ReadString("Multi" + type.ToString()))
+                    : markPaths[(int)type];
+            }
+            colorPaths[(int)ButtonType.Start + 14] = (useNewNote && setting.ContainsKey("MultiColorSliderRight"))
+                ? Utility.Path.Combine(setting["MultiColorSliderRight"])
+                : colorPaths[(int)ButtonType.Start];
+            colorPaths[(int)ButtonType.Start + 1 + 14] = (useNewNote && setting.ContainsKey("MultiColorSliderLeft"))
+                ? Utility.Path.Combine(setting["MultiColorSliderLeft"])
+                : colorPaths[(int)ButtonType.Start + 1];
+            colorPaths[(int)ButtonType.Start + 2 + 14] = (useNewNote && setting.ContainsKey("MultiColorSliderRightExtra"))
+                ? Utility.Path.Combine(setting["MultiColorSliderRightExtra"])
+                : colorPaths[(int)ButtonType.Start + 2];
+            colorPaths[(int)ButtonType.Start + 3 + 14] = (useNewNote && setting.ContainsKey("MultiColorSliderLeftExtra"))
+                ? Utility.Path.Combine(setting["MultiColorSliderLeftExtra"])
+                : colorPaths[(int)ButtonType.Start + 3];
+            markPaths[(int)ButtonType.Start + 14] = (useNewNote && setting.ContainsKey("MultiSliderRight"))
+                ? Utility.Path.Combine(setting["MultiSliderRight"])
+                : markPaths[(int)ButtonType.Start];
+            markPaths[(int)ButtonType.Start + 1 + 14] = (useNewNote && setting.ContainsKey("MultiSliderLeft"))
+                ? Utility.Path.Combine(setting["MultiSliderLeft"])
+                : markPaths[(int)ButtonType.Start + 1];
+            markPaths[(int)ButtonType.Start + 2 + 14] = (useNewNote && setting.ContainsKey("MultiSliderRightExtra"))
+                ? Utility.Path.Combine(setting["MultiSliderRightExtra"])
+                : markPaths[(int)ButtonType.Start + 2];
+            markPaths[(int)ButtonType.Start + 3 + 14] = (useNewNote && setting.ContainsKey("MultiSliderLeftExtra"))
+                ? Utility.Path.Combine(setting["MultiSliderLeftExtra"])
+                : (useNewNote && setting.ContainsKey("MultiColorSliderLeftExtra"))
+                    ? Utility.Path.Combine(setting["MultiColorSliderLeftExtra"])
+                    : markPaths[(int)ButtonType.Start + 3];
+            multiHoldImgPath = (useNewNote && setting.ContainsKey("MultiHold"))
+                ? Utility.Path.Combine(setting.ReadString("MultiHold"))
+                : holdImgPath;
+            multiHoldOffsetX = (useNewNote && setting.ContainsKey("MultiHoldX"))
+                ? float.Parse(setting.ReadString("MultiHoldX"))
+                : holdOffsetX;
+            multiHoldOffsetY = (useNewNote && setting.ContainsKey("MultiHoldY"))
+                ? float.Parse(setting.ReadString("MultiHoldY"))
+                : holdOffsetY;
+        }
+
+        private static bool TryReadEmbeddedNoteSkinIni(out SettingReader setting)
         {
             setting = null;
-            skinRoot = null;
-            var assembly = typeof(PPDEditorSkin).Assembly;
-            using var iniStream = assembly.GetManifestResourceStream("EmbeddedSkin/PPDeditor_Note_Skin.ini");
+            using var iniStream = typeof(PPDEditorSkin).Assembly.GetManifestResourceStream("EmbeddedSkin/PPDeditor_Note_Skin.ini");
             if (iniStream == null)
             {
                 return false;
             }
-            using (var reader = new StreamReader(iniStream))
-            {
-                setting = new SettingReader(reader.ReadToEnd());
-            }
+            using var reader = new StreamReader(iniStream);
+            setting = new SettingReader(reader.ReadToEnd());
+            return true;
+        }
 
-            skinRoot = Path.Combine(Path.GetTempPath(), "PPDEditor_Mod", "skin");
-            var buttonExDir = Path.Combine(skinRoot, "button_ex");
-            Directory.CreateDirectory(buttonExDir);
+        public static void RegisterEmbeddedResources(PPDDevice device, SpriteResourceManager resourceManager)
+        {
+            var assembly = typeof(PPDEditorSkin).Assembly;
             const string prefix = "EmbeddedSkin/button_ex/";
+            const string hiResSuffix = ".12_5.png";
+            var variants = new Dictionary<string, (string Normal, string HiRes)>(StringComparer.OrdinalIgnoreCase);
             foreach (string resourceName in assembly.GetManifestResourceNames())
             {
-                if (!resourceName.StartsWith(prefix, StringComparison.Ordinal))
+                if (!resourceName.StartsWith(prefix, StringComparison.Ordinal)
+                    || !resourceName.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
                 var fileName = resourceName[prefix.Length..];
-                var targetPath = Path.Combine(buttonExDir, fileName);
-                using var stream = assembly.GetManifestResourceStream(resourceName);
+                if (fileName.EndsWith(hiResSuffix, StringComparison.OrdinalIgnoreCase))
+                {
+                    var baseFile = fileName[..^hiResSuffix.Length] + ".png";
+                    variants.TryGetValue(baseFile, out var entry);
+                    variants[baseFile] = (entry.Normal, resourceName);
+                }
+                else
+                {
+                    variants.TryGetValue(fileName, out var entry);
+                    variants[fileName] = (resourceName, entry.HiRes);
+                }
+            }
+
+            bool preferHiRes = !PPDSetting.Setting.HighResolutionImageDisabled && device.Scale.X > 1f;
+            foreach (var pair in variants)
+            {
+                string selectedResource;
+                ImageScale scale;
+                if (preferHiRes && pair.Value.HiRes != null)
+                {
+                    selectedResource = pair.Value.HiRes;
+                    scale = new ImageScale(12, 5);
+                }
+                else if (pair.Value.Normal != null)
+                {
+                    selectedResource = pair.Value.Normal;
+                    scale = new ImageScale(1, 1);
+                }
+                else
+                {
+                    selectedResource = pair.Value.HiRes;
+                    scale = new ImageScale(12, 5);
+                }
+
+                using var stream = assembly.GetManifestResourceStream(selectedResource);
                 if (stream == null)
                 {
                     continue;
                 }
-                if (File.Exists(targetPath) && new FileInfo(targetPath).Length == stream.Length)
-                {
-                    continue;
-                }
-                using var fs = File.Create(targetPath);
-                stream.CopyTo(fs);
+                string key = Utility.Path.Combine(@"button_ex\" + pair.Key);
+                resourceManager.AddImageFromStream(device, key, stream, scale);
             }
-            return true;
         }
 
         public void Initialize(string filename)
@@ -494,22 +541,22 @@ namespace PPDEditor
 
         public PathObject GetMarkColorImagePath(ButtonType buttontype)
         {
-            return colorimagepaths[(int)buttontype];
+            return (UseCustomSkinActive ? colorimagepaths : defaultColorImagePaths)[(int)buttontype];
         }
 
         public PathObject GetMarkImagePath(ButtonType buttontype)
         {
-            return imagepaths[(int)buttontype];
+            return (UseCustomSkinActive ? imagepaths : defaultImagePaths)[(int)buttontype];
         }
 
         public PathObject GetMarkColorImagePath(int buttontype)
         {
-            return colorimagepaths[buttontype];
+            return (UseCustomSkinActive ? colorimagepaths : defaultColorImagePaths)[buttontype];
         }
 
         public PathObject GetMarkImagePath(int buttontype)
         {
-            return imagepaths[buttontype];
+            return (UseCustomSkinActive ? imagepaths : defaultImagePaths)[buttontype];
         }
 
         public PathObject GetTraceImagePath(ButtonType buttontype)
@@ -531,7 +578,7 @@ namespace PPDEditor
 
         public PathObject GetClockAxisImagePath()
         {
-            return clockaxisimagepath;
+            return UseCustomSkinActive ? clockaxisimagepath : defaultClockAxisImagePath;
         }
 
         public PathObject GetCircleAxisImagePath()
@@ -551,16 +598,34 @@ namespace PPDEditor
 
         public void GetHoldInfo(out PathObject imagepath, out float x, out float y)
         {
-            imagepath = holdpath;
-            x = holdx;
-            y = holdy;
+            if (UseCustomSkinActive)
+            {
+                imagepath = holdpath;
+                x = holdx;
+                y = holdy;
+            }
+            else
+            {
+                imagepath = defaultHoldPath;
+                x = defaultHoldX;
+                y = defaultHoldY;
+            }
         }
 
         public void GetMultiHoldInfo(out PathObject imagepath, out float x, out float y)
         {
-            imagepath = exholdpath;
-            x = exholdx;
-            y = exholdy;
+            if (UseCustomSkinActive)
+            {
+                imagepath = exholdpath;
+                x = exholdx;
+                y = exholdy;
+            }
+            else
+            {
+                imagepath = defaultHoldPath;
+                x = defaultHoldX;
+                y = defaultHoldY;
+            }
         }
 
         [GeneratedRegex("(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)")]

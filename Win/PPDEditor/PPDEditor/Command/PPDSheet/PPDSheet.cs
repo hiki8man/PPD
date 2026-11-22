@@ -431,6 +431,16 @@ namespace PPDEditor.Command.PPDSheet
             var command = new SwapLineCommand(data, first, second);
             commandManager.AddCommand(command);
         }
+        public void RefreshMarkImages()
+        {
+            for (int i = 0; i < data.Length; i++)
+            {
+                foreach (Mark mk in data[i].Values)
+                {
+                    mk.RefreshSkinImages();
+                }
+            }
+        }
         public bool[] UpdateMark(float time, float speedscale)
         {
             bool[] ret = new bool[buttonnum];

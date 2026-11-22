@@ -64,7 +64,9 @@ namespace PPDEditor
                 var spriteManager = new DirSpriteManager(dir);
                 spriteManager.Pack();
             }
-            resourceManager = new PPDFramework.Resource.SpriteResourceManager(device, @"img\PPDEditor");
+            var spriteResourceManager = new PPDFramework.Resource.SpriteResourceManager(device, @"img\PPDEditor");
+            PPDEditorSkin.RegisterEmbeddedResources(device, spriteResourceManager);
+            resourceManager = spriteResourceManager;
             CreateResource();
             sm = WindowUtility.SoundManager;
             sm.SetSound(this.sound);

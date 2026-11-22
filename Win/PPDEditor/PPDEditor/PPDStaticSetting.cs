@@ -34,6 +34,7 @@ namespace PPDEditor
         public static int[] Angles = new int[8];
         public static EditorScriptMode ScriptMode = EditorScriptMode.Vet08H;
         public static bool RememberScriptMode;
+        public static bool UseCustomNoteSkin = true;
         public static float Vet08MarkDistance = 300f;
         public static float Vet08Curvature = 20f;
         public static float Vet08CurvatureMulti;
@@ -129,6 +130,7 @@ namespace PPDEditor
                 ScriptMode = EditorScriptMode.Vet08H;
             }
             RememberScriptMode = ReadBoolean(setting, "RememberScriptMode");
+            UseCustomNoteSkin = ReadBooleanDefaultTrue(setting, "UseCustomNoteSkin");
             Vet08MarkDistance = ReadFloat(setting, "Vet08_MarkDistance", 300f);
             Vet08Curvature = ReadFloat(setting, "Vet08_Curvature", 20f);
             Vet08CurvatureMulti = ReadFloat(setting, "Vet08_CurvatureMulti", 0f);
@@ -180,6 +182,12 @@ namespace PPDEditor
         private static bool ReadBoolean(SettingReader setting, string key)
         {
             return setting.ReadString(key) == "1";
+        }
+
+        private static bool ReadBooleanDefaultTrue(SettingReader setting, string key)
+        {
+            var val = setting.ReadString(key);
+            return string.IsNullOrEmpty(val) || val == "1";
         }
 
         private static Color GetColorFromString(string data, Color ErrorColor)

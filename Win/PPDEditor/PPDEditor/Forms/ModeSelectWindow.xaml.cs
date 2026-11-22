@@ -12,15 +12,21 @@ namespace PPDEditor.Forms
         public ModeSelectWindow(EditorScriptMode initialMode, bool rememberChoice)
         {
             InitializeComponent();
+            Title = ModLocalization.Get("ModSelectVersionTitle");
+            promptText.Text = ModLocalization.Get("ModSelectVersionPrompt");
+            rememberCheckBox.Content = ModLocalization.Get("ModRememberChoice");
+            okButton.Content = ModLocalization.Get("ModOk");
+            cancelButton.Content = ModLocalization.Get("ModCancel");
+
             SelectedMode = initialMode;
             RememberChoice = rememberChoice;
             switch (initialMode)
             {
-                case EditorScriptMode.DivaScript:
-                    divascriptRadio.IsChecked = true;
-                    break;
                 case EditorScriptMode.Vet08:
                     vet08Radio.IsChecked = true;
+                    break;
+                case EditorScriptMode.DivaScript:
+                    divascriptRadio.IsChecked = true;
                     break;
                 default:
                     vet08hRadio.IsChecked = true;
@@ -31,13 +37,13 @@ namespace PPDEditor.Forms
 
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
-            if (divascriptRadio.IsChecked == true)
-            {
-                SelectedMode = EditorScriptMode.DivaScript;
-            }
-            else if (vet08Radio.IsChecked == true)
+            if (vet08Radio.IsChecked == true)
             {
                 SelectedMode = EditorScriptMode.Vet08;
+            }
+            else if (divascriptRadio.IsChecked == true)
+            {
+                SelectedMode = EditorScriptMode.DivaScript;
             }
             else
             {

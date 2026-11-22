@@ -46,6 +46,12 @@ namespace PPDEditor.ViewModels
         [ObservableProperty]
         public partial string WindowTitle { get; set; } = FormatWindowTitle(null, AvailableDifficulty.Base);
 
+        public string PreviewScriptMenuText => ModLocalization.Get("ModPreviewScriptMenu");
+
+        public string RememberScriptModeText => ModLocalization.Get("ModRememberChoice");
+
+        public string UseCustomNoteSkinText => ModLocalization.Get("ModUseCustomNoteSkin");
+
         public EditorScriptMode CurrentScriptMode
         {
             get { return PPDStaticSetting.ScriptMode; }
@@ -61,6 +67,32 @@ namespace PPDEditor.ViewModels
                     PPDStaticSetting.RememberScriptMode = value;
                     OnPropertyChanged();
                 }
+            }
+        }
+
+        public bool UseCustomNoteSkin
+        {
+            get { return PPDStaticSetting.UseCustomNoteSkin; }
+            set
+            {
+                if (PPDStaticSetting.UseCustomNoteSkin != value)
+                {
+                    PPDStaticSetting.UseCustomNoteSkin = value;
+                    OnPropertyChanged();
+                    RefreshAllSheetMarkImages();
+                }
+            }
+        }
+
+        private static void RefreshAllSheetMarkImages()
+        {
+            if (WindowUtility.LayerManager == null)
+            {
+                return;
+            }
+            foreach (var sheet in WindowUtility.LayerManager.Sheets)
+            {
+                sheet?.RefreshMarkImages();
             }
         }
 

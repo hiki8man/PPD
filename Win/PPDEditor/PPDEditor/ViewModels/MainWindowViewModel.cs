@@ -262,6 +262,9 @@ namespace PPDEditor.ViewModels
             }
             OnPropertyChanged(nameof(AreaSelectionText));
             OnPropertyChanged(nameof(CopyBufferText));
+            OnPropertyChanged(nameof(PreviewScriptMenuText));
+            OnPropertyChanged(nameof(RememberScriptModeText));
+            OnPropertyChanged(nameof(UseCustomNoteSkinText));
         }
 
         private static void ChangeHelpUrl()

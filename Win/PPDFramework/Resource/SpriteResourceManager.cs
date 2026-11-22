@@ -12,6 +12,7 @@ namespace PPDFramework.Resource
     public class SpriteResourceManager : ResourceManager
     {
         ImageResourceBase[] imageResources;
+        readonly List<ImageResourceBase> extraImageResources = [];
 
         /// <summary>
         /// イメージリソースを取得します。
@@ -76,6 +77,36 @@ namespace PPDFramework.Resource
         }
 
         /// <summary>
+        /// ストリームから画像を読み込み、未登録の場合のみ追加します。
+        /// </summary>
+        /// <param name="device">デバイス。</param>
+        /// <param name="resourceName">リソース名。</param>
+        /// <param name="stream">画像のストリーム。</param>
+        /// <param name="imageScale">画像の拡大率。</param>
+        /// <returns>追加したときは true。</returns>
+        public bool AddImageFromStream(PPDDevice device, string resourceName, Stream stream, ImageScale imageScale)
+        {
+            if (HasResource<ImageResourceBase>(resourceName))
+            {
+                return false;
+            }
+            var imageResource = ImageResourceFactoryManager.Factory.Create(device, stream, true);
+            if (imageScale.Ratio == 1f)
+            {
+                Add(resourceName, imageResource);
+            }
+            else
+            {
+                var w = (int)imageResource.Width;
+                var h = (int)imageResource.Height;
+                var spriteInfo = new SpriteInfo(resourceName, w, h, w, h, 0, 0, DateTime.MinValue);
+                Add(resourceName, new SpriteImageResource(device, imageResource, spriteInfo, imageScale));
+                extraImageResources.Add(imageResource);
+            }
+            return true;
+        }
+
+        /// <summary>
         /// 破棄します。
         /// </summary>
         protected override void DisposeResource()
@@ -89,6 +120,11 @@ namespace PPDFramework.Resource
                 }
                 imageResources = null;
             }
+            foreach (var imageResource in extraImageResources)
+            {
+                imageResource.Dispose();
+            }
+            extraImageResources.Clear();
         }
     }
 }

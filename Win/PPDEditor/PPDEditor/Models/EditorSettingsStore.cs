@@ -132,6 +132,7 @@ namespace PPDEditor.Models
             }
             setting.ReplaceOrAdd("ScriptMode", PPDStaticSetting.ScriptMode.ToString());
             setting.ReplaceOrAdd("RememberScriptMode", PPDStaticSetting.RememberScriptMode);
+            setting.ReplaceOrAdd("UseCustomNoteSkin", PPDStaticSetting.UseCustomNoteSkin);
             setting.ReplaceOrAdd("Vet08_MarkDistance", PPDStaticSetting.Vet08MarkDistance);
             setting.ReplaceOrAdd("Vet08_Curvature", PPDStaticSetting.Vet08Curvature);
             setting.ReplaceOrAdd("Vet08_CurvatureMulti", PPDStaticSetting.Vet08CurvatureMulti);

@@ -447,6 +447,15 @@ namespace PPDEditor
 
         }
 
+        public void RefreshSkinImages()
+        {
+            jiku = new PictureObject(device, resourceManager, skin.GetClockAxisImagePath(), true)
+            {
+                Position = new Vector2(x, y)
+            };
+            UpdateMarkImage();
+        }
+
         protected virtual void UpdateMarkImage()
         {
             int noteType = (int)GetButtonType();
