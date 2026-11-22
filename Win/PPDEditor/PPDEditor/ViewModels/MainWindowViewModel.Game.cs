@@ -287,9 +287,9 @@ namespace PPDEditor.ViewModels
         /// </summary>
         public void UpdateStatus()
         {
-            UpdateMovieStatus();
             if (NativeMethods.timeGetTime() - movielastime > 50)
             {
+                UpdateMovieStatus();
                 WindowUtility.Seekmain.Currenttime = MovieInitialized ? MoviePosition : 0;
                 movielastime = NativeMethods.timeGetTime();
             }

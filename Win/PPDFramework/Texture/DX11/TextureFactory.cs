@@ -13,7 +13,7 @@ namespace PPDFramework.Texture.DX11
 
         public TextureBase Create(PPDDevice device, int width, int height, int level, bool pa)
         {
-            return CreateFromPixels(device, new byte[width * height * 4], width, height, pa, true);
+            return CreateFromPixels(device, new byte[width * height * 4], width, height, pa, true, true);
         }
 
         public TextureBase CreateRenderTarget(PPDDevice device, int width, int height, int level, bool pa)
@@ -110,7 +110,7 @@ namespace PPDFramework.Texture.DX11
             }
         }
 
-        internal static TextureBase CreateFromPixels(PPDDevice device, byte[] pixels, int width, int height, bool pa, bool keepCpuData)
+        internal static TextureBase CreateFromPixels(PPDDevice device, byte[] pixels, int width, int height, bool pa, bool keepCpuData, bool isDynamic = false)
         {
             var handle = GCHandle.Alloc(pixels, GCHandleType.Pinned);
             try
@@ -123,9 +123,9 @@ namespace PPDFramework.Texture.DX11
                     ArraySize = 1,
                     Format = TextureFormat,
                     SampleDescription = new SampleDescription(1, 0),
-                    Usage = ResourceUsage.Default,
+                    Usage = isDynamic ? ResourceUsage.Dynamic : ResourceUsage.Default,
                     BindFlags = BindFlags.ShaderResource,
-                    CPUAccessFlags = CpuAccessFlags.None,
+                    CPUAccessFlags = isDynamic ? CpuAccessFlags.Write : CpuAccessFlags.None,
                     MiscFlags = ResourceOptionFlags.None
                 };
                 var texture = ((ID3D11Device)device.Device).CreateTexture2D(description, new SubresourceData(handle.AddrOfPinnedObject(), (uint)width * 4, 0));

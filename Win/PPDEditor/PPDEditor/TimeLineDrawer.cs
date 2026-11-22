@@ -313,10 +313,17 @@ namespace PPDEditor
             return WpfSkin.ToBrush(color);
         }
 
+        static readonly System.Collections.Generic.Dictionary<int, Pen> penCache = [];
+
         public static Pen ToPen(Color color)
         {
-            var pen = new Pen(ToBrush(color), 1);
-            pen.Freeze();
+            var key = color.ToArgb();
+            if (!penCache.TryGetValue(key, out Pen pen))
+            {
+                pen = new Pen(ToBrush(color), 1);
+                pen.Freeze();
+                penCache[key] = pen;
+            }
             return pen;
         }
     }

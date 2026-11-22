@@ -19,6 +19,7 @@ namespace PPDFramework.Texture.DX11
 
         readonly PPDDevice device;
         readonly bool pa;
+        readonly bool isDynamic;
         byte[] cpuData;
         readonly object cpuDataLock = new();
         int dirtyTop;
@@ -74,6 +75,7 @@ namespace PPDFramework.Texture.DX11
         {
             this.device = device;
             this.pa = pa;
+            this.isDynamic = texture.Description.Usage == ResourceUsage.Dynamic;
             this.cpuData = cpuData;
             D3DTexture = texture;
             Width = (int)texture.Description.Width;
@@ -239,15 +241,40 @@ namespace PPDFramework.Texture.DX11
                 {
                     return;
                 }
-                var handle = GCHandle.Alloc(cpuData, GCHandleType.Pinned);
-                try
+                if (isDynamic)
                 {
-                    var ptr = handle.AddrOfPinnedObject() + dirtyTop * Pitch;
-                    context.UpdateSubresource(D3DTexture, 0, new Box(0, dirtyTop, 0, Width, dirtyBottom, 1), ptr, (uint)Pitch, 0);
+                    var mapped = context.Map(D3DTexture, 0, MapMode.WriteDiscard, MapFlags.None);
+                    try
+                    {
+                        if (mapped.RowPitch == Pitch)
+                        {
+                            Marshal.Copy(cpuData, 0, mapped.DataPointer, cpuData.Length);
+                        }
+                        else
+                        {
+                            for (int y = 0; y < Height; y++)
+                            {
+                                Marshal.Copy(cpuData, y * Pitch, mapped.DataPointer + y * (int)mapped.RowPitch, Pitch);
+                            }
+                        }
+                    }
+                    finally
+                    {
+                        context.Unmap(D3DTexture, 0);
+                    }
                 }
-                finally
+                else
                 {
-                    handle.Free();
+                    var handle = GCHandle.Alloc(cpuData, GCHandleType.Pinned);
+                    try
+                    {
+                        var ptr = handle.AddrOfPinnedObject() + dirtyTop * Pitch;
+                        context.UpdateSubresource(D3DTexture, 0, new Box(0, dirtyTop, 0, Width, dirtyBottom, 1), ptr, (uint)Pitch, 0);
+                    }
+                    finally
+                    {
+                        handle.Free();
+                    }
                 }
                 dirtyTop = dirtyBottom = 0;
             }

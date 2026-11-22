@@ -231,11 +231,12 @@ namespace PPDMovie
         {
             get
             {
-                if (textures == null)
+                var localTextures = textures;
+                if (localTextures == null)
                 {
                     return null;
                 }
-                return textures[currentTextureIndex];
+                return localTextures[Volatile.Read(ref currentTextureIndex)];
             }
         }
 
@@ -243,15 +244,16 @@ namespace PPDMovie
 
         public int BufferCB(double SampleTime, IntPtr pBuffer, int BufferLen)
         {
-            if (Initialized)
+            var localTextures = textures;
+            if (Initialized && localTextures != null)
             {
-                var nextTextureIndex = currentTextureIndex + 1;
-                if (nextTextureIndex >= textures.Length)
+                var nextTextureIndex = Volatile.Read(ref currentTextureIndex) + 1;
+                if (nextTextureIndex >= localTextures.Length)
                 {
                     nextTextureIndex = 0;
                 }
-                textures[nextTextureIndex].Write(pBuffer, BufferLen);
-                currentTextureIndex = nextTextureIndex;
+                localTextures[nextTextureIndex].Write(pBuffer, BufferLen);
+                Volatile.Write(ref currentTextureIndex, nextTextureIndex);
             }
             return 0;
         }
