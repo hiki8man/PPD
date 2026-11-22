@@ -108,6 +108,10 @@ namespace PPDEditor
                     Hidden = true;
                 }
             }
+            if (Hidden)
+            {
+                return ret;
+            }
             float positionScale = PPDStaticSetting.ScriptMode == EditorScriptMode.Vet08H
                 ? (bp - PPDStaticSetting.SubtractBPM) / defaultbpm
                 : scale;
@@ -165,6 +169,10 @@ namespace PPDEditor
 
         private Vector2 ChangeColorPositionStraightDivaScript(float scale, float timediff)
         {
+            if (parameters.Count == 0)
+            {
+                return new Vector2(220000f * 250f / 300000f * timediff * scale, 0f);
+            }
             double frequency;
             if (parameters.TryGetValue("Frequency", out string frequencyParm))
             {
@@ -198,6 +206,10 @@ namespace PPDEditor
 
         private Vector2 ChangeColorPositionDivaScript(float scale, float timediff)
         {
+            if (parameters.Count == 0)
+            {
+                return new Vector2(250f * timediff * scale, (float)Math.Sin((double)(timediff * scale) * Math.PI * -1.0) * 500f / 28.8f);
+            }
             double frequency;
             if (parameters.TryGetValue("Frequency", out string frequencyParm))
             {
@@ -237,6 +249,12 @@ namespace PPDEditor
 
         private Vector2 ChangeColorPositionStraightVet08(float scale, float timediff)
         {
+            if (parameters.Count == 0)
+            {
+                float defaultSpeed = PPDStaticSetting.Vet08MarkSpeed;
+                float defaultDist = PPDStaticSetting.Vet08MarkDistance * PPDStaticSetting.Vet08DecelerationRate;
+                return new Vector2(defaultDist * timediff * scale * defaultSpeed, -PPDStaticSetting.Vet08CurvatureMulti * (float)Math.Sin(timediff * scale * Math.PI * defaultSpeed));
+            }
             float decelerationRate;
             if (parameters.TryGetValue("DecelerationRate", out string decelerationRateParm))
             {
@@ -280,6 +298,11 @@ namespace PPDEditor
 
         private Vector2 ChangeColorPositionVet08(float scale, float timediff)
         {
+            if (parameters.Count == 0)
+            {
+                float defaultSpeed = PPDStaticSetting.Vet08MarkSpeed;
+                return new Vector2(PPDStaticSetting.Vet08MarkDistance * timediff * scale * defaultSpeed, -PPDStaticSetting.Vet08Curvature * (float)Math.Sin(timediff * scale * Math.PI * defaultSpeed));
+            }
             float markDistance;
             if (parameters.TryGetValue("MarkDistance", out string markDistanceParm))
             {
@@ -313,6 +336,12 @@ namespace PPDEditor
 
         private Vector2 ChangeColorPositionStraightVet08H(float scale, float timediff)
         {
+            if (parameters.Count == 0)
+            {
+                float defaultSpeed = PPDStaticSetting.Vet08HMarkSpeed;
+                float defaultDist = PPDStaticSetting.Vet08HMarkDistance * PPDStaticSetting.Vet08HDecelerationRate * PPDStaticSetting.MarkDistanceRatio;
+                return new Vector2(defaultDist * timediff * scale * defaultSpeed, -PPDStaticSetting.Vet08HCurvatureMulti * (float)Math.Sin(timediff * scale * defaultSpeed * Math.PI * PPDStaticSetting.Frequency * 0.5f));
+            }
             float markDistanceRatio;
             if (parameters.TryGetValue("MarkDistanceRatio", out string markDistanceRatioParm))
             {
@@ -357,6 +386,12 @@ namespace PPDEditor
 
         private Vector2 ChangeColorPositionVet08H(float scale, float timediff)
         {
+            if (parameters.Count == 0)
+            {
+                float defaultSpeed = PPDStaticSetting.Vet08HMarkSpeed;
+                float defaultDist = PPDStaticSetting.Vet08HMarkDistance * PPDStaticSetting.MarkDistanceRatio;
+                return new Vector2(defaultDist * timediff * scale * defaultSpeed, -PPDStaticSetting.Vet08HCurvature * (float)Math.Sin(timediff * scale * defaultSpeed * Math.PI * PPDStaticSetting.Frequency * 0.5f));
+            }
             float markDistanceRatio;
             if (parameters.TryGetValue("MarkDistanceRatio", out string markDistanceRatioParm))
             {

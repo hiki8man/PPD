@@ -447,18 +447,23 @@ namespace PPDEditor.Command.PPDSheet
             if (data2 != null)
             {
                 var em = GetEvents();
-                var last = em.GetEvent(0);
-                last ??= new EventData();
+                var eventTimes = em.EventTimes;
+                var eventValues = em.EventValues;
+                int eventCount = eventTimes.Count;
+                int eventIndex = 0;
+                var last = em.GetEvent(0) ?? new EventData();
+                bool isDivaScript = PPDStaticSetting.ScriptMode == EditorScriptMode.DivaScript;
+                float shared60FpsBpm = isDivaScript ? 0f : em.Calculate60FpsBpm(time, bpm);
                 foreach (KeyValuePair<float, SameTimingMarks> pair in data2)
                 {
-                    var current = em.GetEvent(pair.Key);
-                    if (last != current && current != null)
+                    while (eventIndex < eventCount && eventTimes[eventIndex] <= pair.Key)
                     {
-                        last = current;
+                        last = eventValues[eventIndex];
+                        eventIndex++;
                     }
-                    float noteBpm = PPDStaticSetting.ScriptMode == EditorScriptMode.DivaScript
+                    float noteBpm = isDivaScript
                         ? ((last.BPM < 0) ? bpm : last.BPM)
-                        : Get60FpsBPM(time, em);
+                        : shared60FpsBpm;
                     foreach (Mark mk in pair.Value)
                     {
                         if (mk is ExMark exmk)
@@ -471,63 +476,14 @@ namespace PPDEditor.Command.PPDSheet
                             ret[(int)mk.Type] |= (mk.Update(em.GetCorrectTime(time, mk.Time), speedscale * noteBpm,
                                 last.DisplayState, last.NoteType, pair.Value.SameTimings) == 1);
                         }
-                        mk.GraphicUpdate();
+                        if (!mk.Hidden)
+                        {
+                            mk.GraphicUpdate();
+                        }
                     }
                 }
             }
             return ret;
-        }
-        private float Get60FpsBPM(float ctime, EventManagerViewModel em)
-        {
-            SortedList<float, EventData> eventList = em.GetNoteEventBeforeTime(ctime);
-            if (eventList == null || eventList.Count == 0)
-            {
-                return BPM;
-            }
-            if (eventList.Count == 1)
-            {
-                return (eventList.Values[0].BPM >= 0) ? eventList.Values[0].BPM : BPM;
-            }
-            float noteBpm = 0;
-            bool firstBpmChange = true;
-            float bpmChangeOffset = 0;
-            float lastEventBpm = BPM;
-            float lastBpmEventTime = 0;
-            foreach (KeyValuePair<float, EventData> ev in eventList)
-            {
-                lastEventBpm = (ev.Value.BPM >= 0) ? ev.Value.BPM : lastEventBpm;
-                if (firstBpmChange || ev.Value.BPMRapidChange)
-                {
-                    noteBpm = lastEventBpm;
-                    firstBpmChange = false;
-                    bpmChangeOffset = 0;
-                    lastBpmEventTime = ev.Key;
-                    continue;
-                }
-                if (bpmChangeOffset != 0)
-                {
-                    noteBpm += Get60FpsBPMOffset(bpmChangeOffset, ctime - lastBpmEventTime);
-                }
-                lastBpmEventTime = ev.Key;
-                bpmChangeOffset = lastEventBpm - noteBpm;
-            }
-            if (bpmChangeOffset != 0)
-            {
-                noteBpm += Get60FpsBPMOffset(bpmChangeOffset, ctime - lastBpmEventTime);
-            }
-            return noteBpm;
-        }
-        private static float Get60FpsBPMOffset(float bpmChangeOffset, float changeTime)
-        {
-            float bpmChangeByTime = changeTime * 60;
-            if (Math.Abs(bpmChangeOffset) <= bpmChangeByTime)
-            {
-                return bpmChangeOffset;
-            }
-            else
-            {
-                return (bpmChangeOffset > 0) ? bpmChangeByTime : -bpmChangeByTime;
-            }
         }
         public void DrawMark()
         {

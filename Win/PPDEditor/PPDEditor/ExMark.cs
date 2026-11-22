@@ -119,6 +119,10 @@ namespace PPDEditor
                     Hidden = true;
                 }
             }
+            if (Hidden)
+            {
+                return ret;
+            }
             if (ctime <= this.Time)
             {
                 markc.Position = CalcurateMarkCPosition(Position, markc, this.time, ctime, scale, m);

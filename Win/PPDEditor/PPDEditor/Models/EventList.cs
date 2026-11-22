@@ -172,6 +172,82 @@ namespace PPDEditor.Models
             return eventList;
         }
 
+        public float Calculate60FpsBpm(float ctime, float defaultBpm)
+        {
+            var keys = data.Keys;
+            var values = data.Values;
+            int count = keys.Count;
+            if (count == 0)
+            {
+                return defaultBpm;
+            }
+
+            int startIndex = 0;
+            int endIndex = -1;
+            for (int i = 0; i < count; i++)
+            {
+                if (keys[i] > ctime)
+                {
+                    break;
+                }
+                if (values[i].BPMRapidChange)
+                {
+                    startIndex = i;
+                }
+                endIndex = i;
+            }
+
+            if (endIndex < startIndex)
+            {
+                return defaultBpm;
+            }
+            if (endIndex == startIndex)
+            {
+                float singleBpm = values[startIndex].BPM;
+                return singleBpm >= 0 ? singleBpm : defaultBpm;
+            }
+
+            float noteBpm = 0;
+            bool firstBpmChange = true;
+            float bpmChangeOffset = 0;
+            float lastEventBpm = defaultBpm;
+            float lastBpmEventTime = 0;
+            for (int i = startIndex; i <= endIndex; i++)
+            {
+                var ev = values[i];
+                lastEventBpm = ev.BPM >= 0 ? ev.BPM : lastEventBpm;
+                if (firstBpmChange || ev.BPMRapidChange)
+                {
+                    noteBpm = lastEventBpm;
+                    firstBpmChange = false;
+                    bpmChangeOffset = 0;
+                    lastBpmEventTime = keys[i];
+                    continue;
+                }
+                if (bpmChangeOffset != 0)
+                {
+                    noteBpm += Get60FpsBpmOffset(bpmChangeOffset, ctime - lastBpmEventTime);
+                }
+                lastBpmEventTime = keys[i];
+                bpmChangeOffset = lastEventBpm - noteBpm;
+            }
+            if (bpmChangeOffset != 0)
+            {
+                noteBpm += Get60FpsBpmOffset(bpmChangeOffset, ctime - lastBpmEventTime);
+            }
+            return noteBpm;
+        }
+
+        private static float Get60FpsBpmOffset(float bpmChangeOffset, float changeTime)
+        {
+            float bpmChangeByTime = changeTime * 60;
+            if (System.Math.Abs(bpmChangeOffset) <= bpmChangeByTime)
+            {
+                return bpmChangeOffset;
+            }
+            return bpmChangeOffset > 0 ? bpmChangeByTime : -bpmChangeByTime;
+        }
+
         /// <summary>
         /// その時間に有効なイベントの番号です（その時間より前のイベントがなければ -1）。
         /// </summary>

@@ -115,9 +115,18 @@ namespace PPDEditor.ViewModels.Docks
             return events.GetEvent(time);
         }
 
+        public IList<float> EventTimes => events.Times;
+
+        public IList<EventData> EventValues => events.Events;
+
         public SortedList<float, EventData> GetNoteEventBeforeTime(float time)
         {
             return events.GetNoteEventBeforeTime(time);
+        }
+
+        public float Calculate60FpsBpm(float time, float defaultBpm)
+        {
+            return events.Calculate60FpsBpm(time, defaultBpm);
         }
 
         public float GetCorrectTime(float currentTime, float markTime)
