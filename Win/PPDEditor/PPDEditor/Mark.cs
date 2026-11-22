@@ -124,7 +124,7 @@ namespace PPDEditor
 
         protected Vector2 CalcurateMarkCPosition(Vector2 position, PictureObject colorMark, float markTime, float currentTime, float scale, Matrix m)
         {
-            Vector2 vec = position + ((noteType == NoteType.AC || noteType == NoteType.ACFT) && sameTimingMarksCount > 1 ?
+            Vector2 vec = position + (sameTimingMarksCount > 1 ?
                 ChangeColorPositionStraight(scale, markTime - currentTime) :
                 ChangeColorPosition(scale, markTime - currentTime));
             vec = Vector2.TransformCoordinate(vec, m);
@@ -199,11 +199,16 @@ namespace PPDEditor
 
         protected virtual void UpdateMarkImage()
         {
-            mark = new PictureObject(device, resourceManager, skin.GetMarkImagePath(GetButtonType()), true)
+            int noteType = (int)GetButtonType();
+            if (sameTimingMarksCount > 1)
+            {
+                noteType += 14;
+            }
+            mark = new PictureObject(device, resourceManager, skin.GetMarkImagePath(noteType), true)
             {
                 Position = new Vector2(x, y)
             };
-            markc = new PictureObject(device, resourceManager, skin.GetMarkColorImagePath(GetButtonType()))
+            markc = new PictureObject(device, resourceManager, skin.GetMarkColorImagePath(noteType))
             {
                 Position = new Vector2(x, y)
             };

@@ -103,9 +103,9 @@ namespace UnitTests.PPDEditor
             Assert.Equal(new PointF(201, 99), Drag(new PointF(203, 98), 201, 99));
 
             viewModel.SquareGridEnabled = true;
-            // 赤い枠の左上（100, 50）から 25 ごとの格子
-            Assert.Equal(new PointF(200, 100), Drag(new PointF(201, 99), 203, 98));
-            Assert.Equal(new PointF(212, 112), Drag(new PointF(200, 100), 212, 112));
+            // 赤い枠の左上（100, 50）から 20 ごとの格子
+            Assert.Equal(new PointF(200, 110), Drag(new PointF(201, 99), 203, 108));
+            Assert.Equal(new PointF(210, 100), Drag(new PointF(200, 110), 210, 100));
         }
 
         [Theory]
@@ -126,17 +126,24 @@ namespace UnitTests.PPDEditor
         public void EditGrid_ShowsDoubleSize()
         {
             viewModel.EditGridCommand.Execute(null);
-            Assert.Equal(25, viewModel.SquareGrid.Width);
+            Assert.Equal(20, viewModel.SquareGrid.Width);
 
             host.Edit = grid =>
             {
-                Assert.Equal((50, 50), (grid.Width, grid.Height));
-                return new SquareGrid { Width = 40, Height = 60, OffsetX = 10, OffsetY = 20, GridColor = Color.Red };
+                Assert.Equal((40, 40), (grid.Width, grid.Height));
+                return new SquareGrid { Width = 40, Height = 60, OffsetX = 10, OffsetY = 21, GridColor = Color.Red };
             };
             viewModel.EditGridCommand.Execute(null);
 
             var result = viewModel.SquareGrid;
             Assert.Equal((20, 30, 5, 10, Color.Red), (result.Width, result.Height, result.OffsetX, result.OffsetY, result.GridColor));
+
+            host.Edit = grid =>
+            {
+                Assert.Equal(21, grid.OffsetY);
+                return new SquareGrid { Width = 40, Height = 60, OffsetX = 10, OffsetY = 20, GridColor = Color.Red };
+            };
+            viewModel.EditGridCommand.Execute(null);
         }
 
         [Fact]

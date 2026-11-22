@@ -21,8 +21,8 @@ namespace PPDEditor
 
         private static readonly PPDEditorSkin skin = new();
         readonly string[] smallcolorimagepaths = new string[(int)ButtonType.Start];
-        readonly PathObject[] colorimagepaths = new PathObject[(int)ButtonType.Start + 4];
-        readonly PathObject[] imagepaths = new PathObject[(int)ButtonType.Start + 4];
+        readonly PathObject[] colorimagepaths = new PathObject[((int)ButtonType.Start + 4) * 2];
+        readonly PathObject[] imagepaths = new PathObject[((int)ButtonType.Start + 4) * 2];
         readonly PathObject[] traceimagepaths = new PathObject[(int)ButtonType.Start + 4];
         readonly PathObject longnotecirclepath;
         readonly float _innerradius;
@@ -32,8 +32,11 @@ namespace PPDEditor
         readonly PathObject[] effectpaths = new PathObject[(int)MarkEvaluateType.Worst + 1];
         readonly PathObject appeareffectpath;
         readonly PathObject holdpath;
+        readonly PathObject exholdpath;
         readonly float holdx;
         readonly float holdy;
+        readonly float exholdx;
+        readonly float exholdy;
 
         public static PPDEditorSkin Skin
         {
@@ -73,6 +76,20 @@ namespace PPDEditor
                 var sr = new StreamReader("defaultskin.ini");
                 var setting = new SettingReader(sr.ReadToEnd());
                 sr.Close();
+                bool useNewNote = false;
+                if (File.Exists("PPDeditor_Note_Skin.ini"))
+                {
+                    using var exSr = new StreamReader("PPDeditor_Note_Skin.ini");
+                    var exSetting = new SettingReader(exSr.ReadToEnd());
+                    if (exSetting.ReadBoolean("Enable"))
+                    {
+                        useNewNote = true;
+                        foreach (KeyValuePair<string, string> kvp in exSetting.Dictionary)
+                        {
+                            setting.ReplaceOrAdd(kvp.Key, kvp.Value);
+                        }
+                    }
+                }
                 for (ButtonType type = ButtonType.Square; type < ButtonType.Start; type++)
                 {
                     colorimagepaths[(int)type] = Utility.Path.Combine(setting.ReadString("Color" + type));
@@ -104,6 +121,50 @@ namespace PPDEditor
                 holdpath = Utility.Path.Combine(setting.ReadString("Hold"));
                 holdx = float.Parse(setting.ReadString("HoldX"));
                 holdy = float.Parse(setting.ReadString("HoldY"));
+                for (ButtonType type = ButtonType.Square; type < ButtonType.Start; type++)
+                {
+                    colorimagepaths[(int)type + 14] = (useNewNote && setting.ContainsKey("MultiColor" + type))
+                        ? Utility.Path.Combine(setting.ReadString("MultiColor" + type))
+                        : colorimagepaths[(int)type];
+                    imagepaths[(int)type + 14] = (useNewNote && setting.ContainsKey("Multi" + type.ToString()))
+                        ? Utility.Path.Combine(setting.ReadString("Multi" + type.ToString()))
+                        : imagepaths[(int)type];
+                }
+                colorimagepaths[(int)ButtonType.Start + 14] = (useNewNote && setting.ContainsKey("MultiColorSliderRight"))
+                    ? Utility.Path.Combine(setting["MultiColorSliderRight"])
+                    : colorimagepaths[(int)ButtonType.Start];
+                colorimagepaths[(int)ButtonType.Start + 1 + 14] = (useNewNote && setting.ContainsKey("MultiColorSliderLeft"))
+                    ? Utility.Path.Combine(setting["MultiColorSliderLeft"])
+                    : colorimagepaths[(int)ButtonType.Start + 1];
+                colorimagepaths[(int)ButtonType.Start + 2 + 14] = (useNewNote && setting.ContainsKey("MultiColorSliderRightExtra"))
+                    ? Utility.Path.Combine(setting["MultiColorSliderRightExtra"])
+                    : colorimagepaths[(int)ButtonType.Start + 2];
+                colorimagepaths[(int)ButtonType.Start + 3 + 14] = (useNewNote && setting.ContainsKey("MultiColorSliderLeftExtra"))
+                    ? Utility.Path.Combine(setting["MultiColorSliderLeftExtra"])
+                    : colorimagepaths[(int)ButtonType.Start + 3];
+                imagepaths[(int)ButtonType.Start + 14] = (useNewNote && setting.ContainsKey("MultiSliderRight"))
+                    ? Utility.Path.Combine(setting["MultiSliderRight"])
+                    : imagepaths[(int)ButtonType.Start];
+                imagepaths[(int)ButtonType.Start + 1 + 14] = (useNewNote && setting.ContainsKey("MultiSliderLeft"))
+                    ? Utility.Path.Combine(setting["MultiSliderLeft"])
+                    : imagepaths[(int)ButtonType.Start + 1];
+                imagepaths[(int)ButtonType.Start + 2 + 14] = (useNewNote && setting.ContainsKey("MultiSliderRightExtra"))
+                    ? Utility.Path.Combine(setting["MultiSliderRightExtra"])
+                    : imagepaths[(int)ButtonType.Start + 2];
+                imagepaths[(int)ButtonType.Start + 3 + 14] = (useNewNote && setting.ContainsKey("MultiSliderLeftExtra"))
+                    ? Utility.Path.Combine(setting["MultiSliderLeftExtra"])
+                    : (useNewNote && setting.ContainsKey("MultiColorSliderLeftExtra"))
+                        ? Utility.Path.Combine(setting["MultiColorSliderLeftExtra"])
+                        : imagepaths[(int)ButtonType.Start + 3];
+                exholdpath = (useNewNote && setting.ContainsKey("MultiHold"))
+                    ? Utility.Path.Combine(setting.ReadString("MultiHold"))
+                    : holdpath;
+                exholdx = (useNewNote && setting.ContainsKey("MultiHoldX"))
+                    ? float.Parse(setting.ReadString("MultiHoldX"))
+                    : holdx;
+                exholdy = (useNewNote && setting.ContainsKey("MultiHoldY"))
+                    ? float.Parse(setting.ReadString("MultiHoldY"))
+                    : holdy;
             }
         }
 
@@ -369,6 +430,16 @@ namespace PPDEditor
             return imagepaths[(int)buttontype];
         }
 
+        public PathObject GetMarkColorImagePath(int buttontype)
+        {
+            return colorimagepaths[buttontype];
+        }
+
+        public PathObject GetMarkImagePath(int buttontype)
+        {
+            return imagepaths[buttontype];
+        }
+
         public PathObject GetTraceImagePath(ButtonType buttontype)
         {
             return traceimagepaths[(int)buttontype];
@@ -411,6 +482,13 @@ namespace PPDEditor
             imagepath = holdpath;
             x = holdx;
             y = holdy;
+        }
+
+        public void GetMultiHoldInfo(out PathObject imagepath, out float x, out float y)
+        {
+            imagepath = exholdpath;
+            x = exholdx;
+            y = exholdy;
         }
 
         [GeneratedRegex("(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)")]

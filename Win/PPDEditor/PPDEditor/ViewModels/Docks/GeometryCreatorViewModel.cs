@@ -64,6 +64,7 @@ namespace PPDEditor.ViewModels.Docks
         Vector2[] positions = [];
         Vector2[] directions = [];
         bool updatingTransform;
+        bool addOffsetY;
 
         [ObservableProperty]
         public partial bool Antialias { get; set; }
@@ -136,8 +137,8 @@ namespace PPDEditor.ViewModels.Docks
         } = new SquareGrid
         {
             GridColor = DrawingColor.Green,
-            Height = 25,
-            Width = 25,
+            Height = 20,
+            Width = 20,
             OffsetX = 0,
             OffsetY = 0
         };
@@ -316,6 +317,13 @@ namespace PPDEditor.ViewModels.Docks
             }
             var marks = sheet.GetAreaData();
             (positions, directions) = GeometryPlacement.Compute(controller.BCPS, [.. marks.Select(m => m.Time)], IntervalMode, AngleMode, host.Bpm, FixedDistance);
+            if (addOffsetY)
+            {
+                for (int i = 0; i < positions.Length; i++)
+                {
+                    positions[i] = new Vector2(positions[i].X, positions[i].Y + 0.5f);
+                }
+            }
             if (ApplyMoved)
             {
                 ApplyToMarks();
@@ -490,10 +498,11 @@ namespace PPDEditor.ViewModels.Docks
                 Height = SquareGrid.Height * 2,
                 GridColor = SquareGrid.GridColor,
                 OffsetX = SquareGrid.OffsetX * 2,
-                OffsetY = SquareGrid.OffsetY * 2
+                OffsetY = addOffsetY ? (SquareGrid.OffsetY * 2 + 1) : (SquareGrid.OffsetY * 2)
             });
             if (grid != null)
             {
+                addOffsetY = (grid.OffsetY % 2) == 1;
                 SquareGrid = new SquareGrid
                 {
                     Width = grid.Width / 2,

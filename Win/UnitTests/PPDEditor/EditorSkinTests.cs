@@ -104,6 +104,34 @@ namespace UnitTests.PPDEditor
             Assert.Equal(Image("uzueffect.etd"), skin.GetAppearEffectPath().ToString());
             skin.GetHoldInfo(out var hold, out var x, out var y);
             Assert.Equal((Image("hold.png"), 0f, 23f), (hold.ToString(), x, y));
+            // 多压图未配置时回退到普通 Note 图与普通 Hold
+            Assert.Equal(Image("maru.png"), skin.GetMarkImagePath((int)ButtonType.Circle + 14).ToString());
+            Assert.Equal(Image("maruc.png"), skin.GetMarkColorImagePath((int)ButtonType.Circle + 14).ToString());
+            skin.GetMultiHoldInfo(out var multiHold, out var mx, out var my);
+            Assert.Equal((Image("hold.png"), 0f, 23f), (multiHold.ToString(), mx, my));
+        }
+
+        [Fact]
+        public void MultiNoteSkin_LoadsOverrides()
+        {
+            using var folder = new TempFolder(setCurrentDirectory: true);
+            folder.Write("defaultskin.ini", DefaultSkin);
+            folder.Write("PPDeditor_Note_Skin.ini", """
+                [Enable]1
+                [MultiCircle]button\multi_maru.png
+                [MultiColorCircle]button\multi_maruc.png
+                [MultiHold]button\multi_hold.png
+                [MultiHoldX]1
+                [MultiHoldY]25
+                """);
+
+            var skin = NewSkin();
+
+            Assert.Equal(Image("multi_maru.png"), skin.GetMarkImagePath((int)ButtonType.Circle + 14).ToString());
+            Assert.Equal(Image("multi_maruc.png"), skin.GetMarkColorImagePath((int)ButtonType.Circle + 14).ToString());
+            Assert.Equal(Image("sikaku.png"), skin.GetMarkImagePath((int)ButtonType.Square + 14).ToString());
+            skin.GetMultiHoldInfo(out var multiHold, out var mx, out var my);
+            Assert.Equal((Image("multi_hold.png"), 1f, 25f), (multiHold.ToString(), mx, my));
         }
 
         [Fact]

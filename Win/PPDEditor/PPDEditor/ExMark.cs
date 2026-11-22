@@ -22,7 +22,7 @@ namespace PPDEditor
         PictureObject[] exMarksc;
         readonly Vector2[] circlepoints;
         PictureObject trace;
-        readonly PictureObject hold;
+        PictureObject hold;
         Vector2 holdoffset;
         bool played;
         float slideScale = 1;
@@ -162,11 +162,16 @@ namespace PPDEditor
             exMarksc = new PictureObject[ExCount];
             for (int i = 0; i < exMarks.Length; i++)
             {
-                exMarks[i] = new PictureObject(device, resourceManager, skin.GetMarkImagePath(GetButtonType() + 2), true)
+                int noteType = (int)GetButtonType();
+                if (sameTimingMarksCount > 1)
+                {
+                    noteType += 14;
+                }
+                exMarks[i] = new PictureObject(device, resourceManager, skin.GetMarkImagePath(noteType + 2), true)
                 {
                     Position = new Vector2(x, y)
                 };
-                exMarksc[i] = new PictureObject(device, resourceManager, skin.GetMarkColorImagePath(GetButtonType() + 2))
+                exMarksc[i] = new PictureObject(device, resourceManager, skin.GetMarkColorImagePath(noteType + 2))
                 {
                     Position = new Vector2(x, y)
                 };
@@ -293,6 +298,22 @@ namespace PPDEditor
             {
                 Position = new Vector2(x, y)
             };
+            PathObject filename;
+            float a;
+            float b;
+            if (sameTimingMarksCount > 1)
+            {
+                skin.GetMultiHoldInfo(out filename, out a, out b);
+            }
+            else
+            {
+                skin.GetHoldInfo(out filename, out a, out b);
+            }
+            hold = new PictureObject(device, resourceManager, filename, true)
+            {
+                Position = new Vector2(x + a, y + b)
+            };
+            holdoffset = new Vector2(a, b);
             CreateExMark();
             UpdateMarkPosition();
         }
